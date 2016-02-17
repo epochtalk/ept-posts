@@ -1,0 +1,37 @@
+var Joi = require('joi');
+var Boom = require('boom');
+
+/**
+  * @apiVersion 0.4.0
+  * @apiGroup Posts
+  * @api {POST} /posts/:id Undelete
+  * @apiName UndeletePost
+  * @apiPermission User (Post's Author) or Admin
+  * @apiDescription Used to undo a deleted post.
+  *
+  * @apiParam {string} id The Id of the post to undo deletion on
+  *
+  * @apiUse PostObjectSuccess
+  *
+  * @apiError (Error 400) BadRequest Post Not Deleted
+  * @apiError (Error 500) InternalServerError There was an issue undeleting the post
+  */
+exports.undelete = {
+  method: 'POST',
+  path: '/posts/{id}/undelete',
+  config: {
+    app: {
+      post_id: 'params.id',
+      isPostDeletable: 'posts.privilegedDelete'
+    },
+    auth: { strategy: 'jwt' },
+    plugins: { acls: 'posts.undelete' },
+    validate: { params: { id: Joi.string().required() } },
+    pre: [ { method: 'auth.posts.delete(server, auth, params.id)'} ],
+    handler: function(request, reply) {
+      var promise = request.db.posts.undelete(request.params.id)
+      .error(function(err) { return Boom.badRequest(err.message); });
+      return reply(promise);
+    }
+  }
+};

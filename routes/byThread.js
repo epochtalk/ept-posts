@@ -1,0 +1,89 @@
+var Joi = require('joi');
+var path = require('path');
+var Boom = require('boom');
+var common = require(path.normalize(__dirname + '/../common'));
+
+/**
+  * @apiVersion 0.4.0
+  * @apiGroup Posts
+  * @api {GET} /posts Page By Thread
+  * @apiName PagePostsByThread
+  * @apiDescription Used to page through posts by thread.
+  *
+  * @apiParam (Query) {string} thread_id Id of the thread to retrieve posts from
+  * @apiParam (Query) {number} page Specific page of posts to retrieve. Do not use with start.
+  * @apiParam (Query) {mixed} limit Number of posts to retrieve per page.
+  * @apiParam (Query) {number} start Specific post within the thread. Do not use with page.
+  *
+  * @apiSuccess {array} posts Object containing posts for particular page, the thread these Posts
+  * belong to, and the calculated page and limit constraints.
+  *
+  * @apiError (Error 500) InternalServerError There was an issue finding the posts for thread
+  */
+exports.byThread = {
+  method: 'GET',
+  path: '/posts',
+  config: {
+    auth: { mode: 'try', strategy: 'jwt' },
+    plugins: { acls: 'posts.byThread' },
+    validate: {
+      query: Joi.object().keys({
+        thread_id: Joi.string().required(),
+        start: Joi.number().integer().min(1),
+        page: Joi.number().integer().min(1),
+        limit: Joi.number().integer().min(1).max(100).default(25)
+      }).without('start', 'page')
+    },
+    pre: [ { method: 'auth.posts.byThread(server, auth, query.thread_id)', assign: 'viewables' } ],
+    handler: function(request, reply) {
+      // ready parameters
+      var userId = '';
+      var page = request.query.page;
+      var start = request.query.start;
+      var limit = request.query.limit;
+      var threadId = request.query.thread_id;
+      var authenticated = request.auth.isAuthenticated;
+      if (authenticated) { userId = request.auth.credentials.id; }
+      var viewables = request.pre.viewables;
+
+      var opts = { limit: limit, start: 0, page: 1 };
+      if (start) { opts.page = Math.ceil(start / limit); }
+      else if (page) { opts.page = page; }
+      opts.start = ((opts.page * limit) - limit);
+
+      // retrieve posts for this thread
+      var getPosts = request.db.posts.byThread(threadId, opts);
+      var getThread = request.db.threads.find(threadId);
+      var getThreadWatching = request.db.threads.watching(threadId, userId);
+      var getPoll = request.db.polls.byThread(threadId);
+      var hasVoted = request.db.polls.hasVoted(threadId, userId);
+
+      var promise = Promise.join(getPosts, getThread, getThreadWatching, getPoll, hasVoted, function(posts, thread, threadWatching, poll, voted) {
+        // check if thread is being Watched
+        if (threadWatching) { thread.watched = true; }
+        if (poll) {
+          var hideVotes = poll.display_mode === 'voted' && !voted;
+          hideVotes = hideVotes || (poll.display_mode === 'expired' && poll.expiration > Date.now());
+          if (hideVotes) { poll.answers.map(function(answer) { answer.votes = 0; }); }
+          poll.hasVoted = voted;
+          thread.poll = poll;
+        }
+
+        return {
+          thread: thread,
+          limit: opts.limit,
+          page: opts.page,
+          posts: common.cleanPosts(posts, userId, viewables)
+        };
+      })
+      // handle page or start out of range
+      .then(function(ret) {
+        var retVal = Boom.notFound();
+        if (ret.posts.length > 0) { retVal = ret; }
+        return retVal;
+      });
+
+      return reply(promise);
+    }
+  }
+};

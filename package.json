@@ -1,0 +1,13 @@
+{
+  "name": "ept-posts",
+  "version": "1.0.0",
+  "description": "Default Epochtalk Posts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Edward Kim",
+  "license": "ISC",
+  "dependencies": {
+  }
+}
