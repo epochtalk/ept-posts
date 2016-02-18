@@ -16,9 +16,9 @@ var Boom = require('boom');
   * @apiError (Error 400) BadRequest Post Already Deleted
   * @apiError (Error 500) InternalServerError There was an issue deleting the post
   */
-exports.delete = {
+module.exports = {
   method: 'DELETE',
-  post: '/posts/{id}',
+  path: '/api/posts/{id}',
   config: {
     auth: { strategy: 'jwt' },
     plugins: { acls: 'posts.delete' },

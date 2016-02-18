@@ -1,16 +1,17 @@
 var path = require('path');
+var db = require(path.normalize(__dirname + '/db'));
 var routes = require(path.normalize(__dirname + '/routes'));
 var common = require(path.normalize(__dirname + '/common'));
 var authorization = require(path.normalize(__dirname + '/authorization'));
 
-module.exports = {
+module.exports =  {
   name: 'posts',
-  version: '1.0.0',
-  api: common,
-  authorization: authorization,
   permissions: permissions,
+  routes: routes,
   common: common,
-  routes: routes
+  authorization: authorization,
+  db: db,
+  api: common
 };
 
 var permissions = {

@@ -14,9 +14,9 @@ var Joi = require('joi');
   *
   * @apiError (Error 500) InternalServerError There was an issue purging the post
   */
-exports.purge = {
+module.exports = {
   method: 'DELETE',
-  path: '/posts/{id}/purge',
+  path: '/api/posts/{id}/purge',
   config: {
     app: { post_id: 'params.id' },
     auth: { strategy: 'jwt' },

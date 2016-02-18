@@ -2,7 +2,7 @@ var Joi = require('joi');
 var path = require('path');
 var Promise = require('bluebird');
 var querystring = require('querystring');
-var common = require(path.normalize(__dirname + '/../common'));
+var common = require(path.normalize(__dirname + '/common'));
 
 /**
   * @apiVersion 0.4.0
@@ -22,9 +22,9 @@ var common = require(path.normalize(__dirname + '/../common'));
   *
   * @apiError (Error 500) InternalServerError There was an issue finding posts for the user
   */
-exports.pageByUser = {
+module.exports = {
   method: 'GET',
-  path: '/posts/user/{username}',
+  path: '/api/posts/user/{username}',
   config: {
     auth: { mode: 'try', strategy: 'jwt' },
     plugins: { acls: 'posts.pageByUser' },

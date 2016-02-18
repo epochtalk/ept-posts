@@ -1,6 +1,6 @@
 var Joi = require('joi');
 var path = require('path');
-var common = require(path.normalize(__dirname + '/../common'));
+var common = require(path.normalize(__dirname + '/common'));
 
 /**
   * @apiVersion 0.4.0
@@ -17,9 +17,9 @@ var common = require(path.normalize(__dirname + '/../common'));
   *
   * @apiError (Error 500) InternalServerError There was an issue updating the post
   */
-exports.update = {
+module.exports = {
   method: 'POST',
-  path: '/posts/{id}',
+  path: '/api/posts/{id}',
   config: {
     auth: { strategy: 'jwt' },
     plugins: { acls: 'posts.update' },

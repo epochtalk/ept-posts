@@ -16,9 +16,9 @@ var Boom = require('boom');
   * @apiError (Error 400) BadRequest Post Not Deleted
   * @apiError (Error 500) InternalServerError There was an issue undeleting the post
   */
-exports.undelete = {
+module.exports = {
   method: 'POST',
-  path: '/posts/{id}/undelete',
+  path: '/api/posts/{id}/undelete',
   config: {
     app: {
       post_id: 'params.id',

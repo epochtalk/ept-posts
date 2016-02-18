@@ -1,7 +1,8 @@
 var Joi = require('joi');
 var path = require('path');
 var Boom = require('boom');
-var common = require(path.normalize(__dirname + '/../common'));
+var Promise = require('bluebird');
+var common = require(path.normalize(__dirname + '/common'));
 
 /**
   * @apiVersion 0.4.0
@@ -20,9 +21,9 @@ var common = require(path.normalize(__dirname + '/../common'));
   *
   * @apiError (Error 500) InternalServerError There was an issue finding the posts for thread
   */
-exports.byThread = {
+module.exports = {
   method: 'GET',
-  path: '/posts',
+  path: '/api/posts',
   config: {
     auth: { mode: 'try', strategy: 'jwt' },
     plugins: { acls: 'posts.byThread' },

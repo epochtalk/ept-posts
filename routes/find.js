@@ -1,7 +1,7 @@
 var Joi = require('joi');
 var path = require('path');
 var Boom = require('boom');
-var common = require(path.normalize(__dirname + '/../common'));
+var common = require(path.normalize(__dirname + '/common'));
 
 /**
   * @apiVersion 0.4.0
@@ -18,7 +18,7 @@ var common = require(path.normalize(__dirname + '/../common'));
   */
 module.exports = {
   method: 'GET',
-  path: '/posts/{id}',
+  path: '/api/posts/{id}',
   config: {
     auth: { mode: 'try', strategy: 'jwt' },
     plugins: { acls: 'posts.find' },
