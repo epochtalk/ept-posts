@@ -1,6 +1,4 @@
 var Joi = require('joi');
-var path = require('path');
-var common = require(path.normalize(__dirname + '/common'));
 
 /**
   * @apiVersion 0.4.0
@@ -33,7 +31,7 @@ module.exports = {
       { method: 'auth.posts.create(server, auth, payload.thread_id)' },
       { method: 'common.posts.clean(sanitizer, payload)' },
       { method: 'common.posts.parse(parser, payload)' },
-      { method: 'common.images.sub(imageStore, payload)' }
+      { method: 'common.images.sub(payload)' }
     ],
     handler: function(request, reply) {
       // build the post object from payload and params
@@ -43,7 +41,7 @@ module.exports = {
       // create the post in db
       var promise = request.db.posts.create(newPost)
       // handle any image references
-      .then((post) => { common.createImageReferences(request, post); });
+      .then((post) => { return request.imageStore.createImageReferences(post); });
       return reply(promise);
     }
   }

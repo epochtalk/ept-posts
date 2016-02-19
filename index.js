@@ -8,10 +8,10 @@ module.exports =  {
   name: 'posts',
   permissions: permissions,
   routes: routes,
-  common: common,
+  common: common.export(),
   authorization: authorization,
   db: db,
-  api: common
+  api: common.apiExport()
 };
 
 var permissions = {

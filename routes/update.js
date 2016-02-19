@@ -1,6 +1,4 @@
 var Joi = require('joi');
-var path = require('path');
-var common = require(path.normalize(__dirname + '/common'));
 
 /**
   * @apiVersion 0.4.0
@@ -36,14 +34,14 @@ module.exports = {
       { method: 'auth.posts.update(server, auth, params.id, payload.thread_id)' },
       { method: 'common.posts.clean(sanitizer, payload)' },
       { method: 'common.posts.parse(parser, payload)' },
-      { method: 'common.images.sub(imageStore, payload)' }
+      { method: 'common.images.sub(payload)' }
     ],
     handler: function(request, reply) {
       var updatePost = request.payload;
       updatePost.id = request.params.id;
       var promise = request.db.posts.update(updatePost)
       // handle image references
-      .then((post) => { common.updateImageReferences(request, post); });
+      .then((post) => { return request.imageStore.updateImageReferences(post); });
       return reply(promise);
     }
   }

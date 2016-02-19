@@ -1,23 +1,31 @@
-var cheerio = require('cheerio');
+var _ = require('lodash');
 var Promise = require('bluebird');
 
-module.exports = [
-  {
-    name: 'common.posts.clean',
-    method: clean,
-    options: { callback: false }
-  },
-  {
-    name: 'common.posts.parse',
-    method: parse,
-    options: { callback: false }
-  },
-  {
-    name: 'common.images.sub',
-    method: imageSub,
-    options: { callback: false }
-  }
-];
+var common = {};
+module.exports = common;
+
+common.clean = clean;
+common.parse = parse;
+common.cleanPosts = cleanPosts;
+
+common.export = () =>  {
+  return [
+    {
+      name: 'common.posts.clean',
+      method: clean,
+      options: { callback: false }
+    },
+    {
+      name: 'common.posts.parse',
+      method: parse,
+      options: { callback: false }
+    }
+  ];
+};
+
+common.apiExport = () => {
+  return { format: cleanPosts  };
+};
 
 function clean(sanitizer, payload) {
   payload.title = sanitizer.strip(payload.title);
@@ -31,29 +39,48 @@ function parse(parser, payload) {
   if (payload.body === payload.raw_body) { payload.raw_body = ''; }
 }
 
-// TODO: this should be moved to imageStore
-function imageSub(imageStore, payload) {
-  var html = payload.body;
-  // load html in post.body into cheerio
-  var $ = cheerio.load(html);
+/**
+ *  ViewContext can be an array of boards or a boolean
+ */
+function cleanPosts(posts, currentUserId, viewContext) {
+  posts = [].concat(posts);
+  var viewables = viewContext;
+  var viewablesType = 'boolean';
+  var boards = [];
+  if (_.isArray(viewContext)) {
+    boards = viewContext.map(function(vd) { return vd.board_id; });
+    viewablesType = 'array';
+  }
 
-  // collect all the images in the body
-  var images = [];
-  $('img').each(function(index, element) {
-    images.push(element);
-  });
+  return posts.map(function(post) {
 
-  // convert each image's src to cdn version
-  return Promise.map(images, function(element) {
-    var imgSrc = $(element).attr('src');
-    var savedUrl = imageStore.saveImage(imgSrc);
+    // if currentUser owns post, show everything
+    var viewable = false;
+    if (currentUserId === post.user.id) { viewable = true; }
+    // if viewables is an array, check if user is moderating this post
+    else if (viewablesType === 'array' && _.includes(boards, post.board_id)) { viewable = true; }
+    // if viewables is a true, view all posts
+    else if (viewables) { viewable = true; }
 
-    if (savedUrl) {
-      // move original src to data-canonical-src
-      $(element).attr('data-canonical-src', imgSrc);
-      // update src with new url
-      $(element).attr('src', savedUrl);
+    // remove deleted users or post information
+    var deleted = false;
+    if (post.deleted || post.user.deleted || post.board_visible === false) { deleted = true; }
+
+    // format post
+    if (viewable && deleted) { post.hidden = true; }
+    else if (deleted) {
+      post = {
+        id: post.id,
+        hidden: true,
+        _deleted: true,
+        thread_title: 'deleted',
+        user: {}
+      };
     }
-  })
-  .then(function() { payload.body = $.html(); });
+
+    if (!post.deleted) { delete post.deleted; }
+    delete post.board_visible;
+    delete post.user.deleted;
+    return post;
+  });
 }
