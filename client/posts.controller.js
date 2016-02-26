@@ -1,6 +1,6 @@
 var ctrl = [
-  '$rootScope', '$scope', '$timeout', '$anchorScroll', '$location', 'Alert', 'Watchlist', 'Session', 'Threads', 'Posts', 'pageData',
-  function($rootScope, $scope, $timeout, $anchorScroll, $location, Alert, Watchlist, Session, Threads, Posts, pageData) {
+  '$rootScope', '$scope', '$timeout', '$anchorScroll', '$location', 'Alert', 'Watchlist', 'Session', 'Posts', 'pageData',
+  function($rootScope, $scope, $timeout, $anchorScroll, $location, Alert, Watchlist, Session, Posts, pageData) {
     var ctrl = this;
     var parent = $scope.$parent.PostsParentCtrl;
     parent.loggedIn = Session.isAuthenticated;
@@ -21,8 +21,98 @@ var ctrl = [
     else { $timeout($anchorScroll); }
 
     // Get access rights to page controls for authed user
-    this.controlAccess = Session.getControlAccess('postControls', pageData.thread.board_id);
-    this.moderatedControlAccess = Session.getControlAccess('threadControls.moderated');
+    this.moderatedControlAccess = Session.getControlAccess('threads.moderated');
+
+    // Posts Permissions
+    this.canPost = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (!Session.hasPermission('posts.create.allow')) { return false; }
+
+      if (ctrl.thread.locked) {
+        if (Session.hasPermission('posts.create.bypass.locked.admin')) { return true; }
+        else if (Session.hasPermission('posts.create.bypass.locked.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { return true; }
+        }
+        else { return false; }
+      }
+
+      return true;
+    };
+
+    this.canUpdate = function(post) {
+      if (!Session.isAuthenticated()) { return false; }
+      if (!Session.hasPermission('posts.update.allow')) { return false; }
+
+      var validBypass = false;
+
+      // locked
+      if (ctrl.thread.locked) {
+        if (Session.hasPermission('posts.update.bypass.locked.admin')) { validBypass = true; }
+        else if (Session.hasPermission('posts.update.bypass.locked.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { validBypass = true; }
+        }
+        else { return false; }
+      }
+
+      // owner
+      if (post.user.id === ctrl.user.id) { validBypass = true; }
+      else {
+        if (Session.hasPermission('posts.update.bypass.owner.admin')) { validBypass = true; }
+        else if (Session.hasPermission('posts.update.bypass.owner.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { validBypass = true; }
+        }
+        else { return false; }
+      }
+
+      // deleted
+      if (post.deleted) {
+        if (Session.hasPermission('posts.update.bypass.deleted.admin')) { validBypass = true; }
+        else if (Session.hasPermission('posts.update.bypass.deleted.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { validBypass = true; }
+        }
+        else { return false; }
+      }
+
+      return validBypass;
+    };
+
+    this.canDelete = function(post) {
+      if (!Session.isAuthenticated()) { return false; }
+      if (!Session.hasPermission('posts.delete.allow')) { return false; }
+
+      var validBypass = false;
+
+      // locked
+      if (ctrl.thread.locked) {
+        if (Session.hasPermission('posts.delete.bypass.locked.admin')) { validBypass = true; }
+        else if (Session.hasPermission('posts.delete.bypass.locked.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { validBypass = true; }
+        }
+        else { return false; }
+      }
+
+      // moderated/owner
+      if (post.user.id === ctrl.user.id) { validBypass = true; }
+      else if (ctrl.thread.moderated && ctrl.thread.user.id === ctrl.user.id && ctrl.moderatedControlAccess) { validBypass = true; }
+      else if (Session.hasPermission('posts.delete.bypass.owner.admin')) { validBypass = true; }
+      else if (Session.hasPermission('posts.delete.bypass.owner.mod')) {
+        if (Session.moderatesBoard(ctrl.thread.board_id)) { validBypass = true; }
+        else { return false; }
+      }
+
+      return validBypass;
+    };
+
+    this.canPurge = function() {
+      if (!Session.isAuthenticated()) { return false; }
+      if (!Session.hasPermission('posts.purge.allow')) { return false; }
+
+      if (Session.hasPermission('posts.purge.bypass.purge.admin')) { return true; }
+      else if (Session.hasPermission('posts.purge.bypass.purge.mod')) {
+        if (Session.moderatesBoard(ctrl.thread.board_id)) { return true; }
+      }
+      else { return false; }
+    };
 
     // init function
     (function() {

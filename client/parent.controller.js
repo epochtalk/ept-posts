@@ -18,21 +18,36 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
     this.pollValid = false;
     this.resetPoll = false;
     this.poll = {};
+
+    // Thread and Report Permission
+    this.showThreadControls = false;
     this.controlAccess = {};
     this.pollControlAccess = {};
     this.reportControlAccess = {
-      reportPosts: Session.hasPermission('reportControls.reportPosts'),
-      reportUsers: Session.hasPermission('reportControls.reportUsers')
+      reportPosts: Session.hasPermission('reports.createPostReport'),
+      reportUsers: Session.hasPermission('reports.createUsersReport')
     };
-    this.postControlAccess = {
-      create: Session.hasPermission('postControls.create')
+
+    // Post Permissions
+    this.canPost = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (!Session.hasPermission('posts.create.allow')) { return false; }
+
+      if (ctrl.thread.locked) {
+        if (Session.hasPermission('posts.create.bypass.locked.admin')) { return true; }
+        else if (Session.hasPermission('posts.create.bypass.locked.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { return true; }
+        }
+        else { return false; }
+      }
+
+      return true;
     };
-    this.showThreadControls = false;
 
     // wait for board_id to be populated by child controller
     $scope.$watch(function() { return ctrl.board_id; }, function(boardId) {
       // Get access rights to page controls for authed user
-      ctrl.controlAccess = Session.getControlAccess('threadControls', boardId);
+      ctrl.controlAccess = Session.getControlAccess('threads', boardId);
       // thread owner can lock and edit title
       if (ctrl.user.id === ctrl.thread.user.id) {
         ctrl.controlAccess.privilegedLock = ctrl.controlAccess.lock;
@@ -44,21 +59,11 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
       delete ctrl.privilegedControlAccess.create;
       delete ctrl.privilegedControlAccess.moderated;
       ctrl.showThreadControls = some(ctrl.privilegedControlAccess);
-      ctrl.pollControlAccess =  { create: Session.hasPermission('pollControls.create') };
+      ctrl.pollControlAccess =  { create: Session.hasPermission('polls.create') };
 
       // get boards for mods and admins
       ctrl.getBoards();
     });
-
-    this.allowPosting = function() {
-      var bypassLock = Session.hasPermission('postControls.bypassLock') &&
-        Session.moderatesBoard(ctrl.thread.board_id);
-      var allowed = false;
-        if (!ctrl.loggedIn()) { allowed = false; }
-        else if (bypassLock) { allowed = true; }
-        else if (!ctrl.thread.locked) { allowed = true; }
-      return allowed;
-    };
 
     this.getBoards = function() {
       if (ctrl.controlAccess.privilegedMove) {
@@ -146,9 +151,8 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
         ctrl.addPoll = false;
         ctrl.resetPoll = true;
       })
-      .catch(function(err) {
+      .catch(function() {
         Alert.error('There was an error creating the poll');
-        console.log(err); // TODO: Remove this
       });
     };
 

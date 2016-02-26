@@ -21,7 +21,6 @@ module.exports = {
   path: '/api/posts/{id}',
   config: {
     auth: { strategy: 'jwt' },
-    plugins: { acls: 'posts.delete' },
     validate: { params: { id: Joi.string().required() } },
     pre: [ { method: 'auth.posts.delete(server, auth, params.id)'} ],
     handler: function(request, reply) {

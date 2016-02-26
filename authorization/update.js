@@ -12,7 +12,7 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.privilegedUpdate.all'
+      permission: 'posts.update.bypass.owner.admin'
     },
     {
       // is post owner
@@ -26,7 +26,7 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.privilegedUpdate.some')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.owner.mod')
     }
   ];
   var owner = server.authorization.stitch(error, ownerCond, 'any');
@@ -38,7 +38,7 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.privilegedUpdate.all'
+      permission: 'posts.update.bypass.deleted.admin'
     },
     {
       // is post not deleted
@@ -52,35 +52,10 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       type: 'isMod',
       method:  server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.privilegedUpdate.some')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.deleted.mod')
     }
   ];
   var writer = server.authorization.stitch(error, writeCond, 'any');
-
-  // access board
-  var accessCond = [
-    {
-      // permission based override
-      type: 'hasPermission',
-      server: server,
-      auth: auth,
-      permission: 'boards.viewUncategorized.all'
-    },
-    {
-      // is board moderator
-      type: 'isMod',
-      method: server.db.moderators.isModeratorWithPostId,
-      args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'boards.viewUncategorized.some')
-    },
-    {
-      // is board visible
-      type: 'dbValue',
-      method: server.db.posts.getPostsBoardInBoardMapping,
-      args: [postId, server.plugins.acls.getUserPriority(auth)]
-    }
-  ];
-  var access = server.authorization.stitch(error, accessCond, 'any');
 
   // is thread locked
   var lockedCond = [
@@ -89,7 +64,7 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.bypassLock.all'
+      permission: 'posts.update.bypass.locked.admin'
     },
     {
       // is thread locked
@@ -103,13 +78,26 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       type: 'isMod',
       method: server.db.moderators.isModeratorWithThreadId,
       args: [userId, threadId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.bypassLock.some')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.locked.mod')
     }
   ];
   var locked = server.authorization.stitch(error, lockedCond, 'any');
 
+  // access board
+  var access = server.authorization.build({
+    error: Boom.notFound('Board Not Found'),
+    type: 'dbValue',
+    method: server.db.posts.getPostsBoardInBoardMapping,
+    args: [postId, server.plugins.acls.getUserPriority(auth)]
+  });
+
   // -- is User Account Active
-  var active = server.authorization.common.isActive(Boom.forbidden('Account Not Active'), server, userId);
+  var active = server.authorization.build({
+    error: Boom.forbidden('Account Not Active'),
+    type: 'isActive',
+    server: server,
+    userId: userId
+  });
 
   // final promise
   return Promise.all([owner, writer, access, locked, active]);

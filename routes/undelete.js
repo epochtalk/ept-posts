@@ -25,7 +25,6 @@ module.exports = {
       isPostDeletable: 'posts.privilegedDelete'
     },
     auth: { strategy: 'jwt' },
-    plugins: { acls: 'posts.undelete' },
     validate: { params: { id: Joi.string().required() } },
     pre: [ { method: 'auth.posts.delete(server, auth, params.id)'} ],
     handler: function(request, reply) {

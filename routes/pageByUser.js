@@ -27,7 +27,6 @@ module.exports = {
   path: '/api/posts/user/{username}',
   config: {
     auth: { mode: 'try', strategy: 'jwt' },
-    plugins: { acls: 'posts.pageByUser' },
     validate: {
       params: { username: Joi.string().required() },
       query: {

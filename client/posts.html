@@ -87,11 +87,11 @@
 </div>
 
 <!-- Editor -->
-<div ng-if="PostsParentCtrl.allowPosting()">
+<div ng-if="PostsParentCtrl.canPost()">
 
   <!-- fixed bottom toolbar -->
   <ul class="post-toolbar">
-    <li ng-click="PostsParentCtrl.loadEditor()" ng-if="PostsParentCtrl.allowPosting() && PostsParentCtrl.postControlAccess.create">
+    <li ng-click="PostsParentCtrl.loadEditor()" ng-if="PostsParentCtrl.canPost()">
       <span>+</span>
     </li>
   </ul>

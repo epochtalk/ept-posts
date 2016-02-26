@@ -20,7 +20,6 @@ module.exports = {
   config: {
     app: { post_id: 'params.id' },
     auth: { strategy: 'jwt' },
-    plugins: { acls: 'posts.purge' },
     validate: { params: { id: Joi.string().required() } },
     pre: [ { method: 'auth.posts.purge(server, auth, params.id)' } ],
     handler: function(request, reply) {

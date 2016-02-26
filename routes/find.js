@@ -21,7 +21,6 @@ module.exports = {
   path: '/api/posts/{id}',
   config: {
     auth: { mode: 'try', strategy: 'jwt' },
-    plugins: { acls: 'posts.find' },
     validate: { params: { id: Joi.string().required() } },
     pre: [ { method: 'auth.posts.find(server, auth, params.id)', assign: 'viewDeleted' } ],
     handler: function(request, reply) {

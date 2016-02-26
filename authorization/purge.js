@@ -18,14 +18,14 @@ module.exports = function postsPurge(server, auth, postId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.privilegedPurge.all'
+      permission: 'posts.purge.bypass.purge.admin'
     },
     {
       // is board moderator
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.privilegedPurge.some')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.purge.bypass.purge.mod')
     }
   ];
   var purge = server.authorization.stitch(Boom.forbidden(), purgeCond, 'any');

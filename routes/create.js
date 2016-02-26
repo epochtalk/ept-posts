@@ -18,7 +18,6 @@ module.exports = {
   path: '/api/posts',
   config: {
     auth: { strategy: 'jwt' },
-    plugins: { acls: 'posts.create' },
     validate: {
       payload: Joi.object().keys({
         title: Joi.string().min(1).max(255).required(),

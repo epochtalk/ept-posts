@@ -6,51 +6,30 @@ module.exports = function postsFind(server, auth, postId) {
   var userId = '';
   var authenticated = auth.isAuthenticated;
   if (authenticated) { userId = auth.credentials.id; }
-  var error = Boom.notFound();
 
   // access board
-  var accessSome = server.plugins.acls.getACLValue(auth, 'boards.viewUncategorized.some');
-  var priority = server.plugins.acls.getUserPriority(auth);
-  var accessCond = [
-    {
-      // permission based override
-      type: 'hasPermission',
-      server: server,
-      auth: auth,
-      permission: 'boards.viewUncategorized.all'
-    },
-    {
-      // is board moderator
-      type: 'isMod',
-      method: server.db.moderators.isModeratorWithPostId,
-      args: [userId, postId],
-      permission: accessSome
-    },
-    {
-      // is board visible
-      type: 'dbValue',
-      method: server.db.posts.getPostsBoardInBoardMapping,
-      args: [postId, priority]
-    }
-  ];
-  var access = server.authorization.stitch(error, accessCond, 'any');
+  var access = server.authorization.build({
+    error: Boom.notFound('Board Not Found'),
+    type: 'dbValue',
+    method: server.db.posts.getPostsBoardInBoardMapping,
+    args: [postId, server.plugins.acls.getUserPriority(auth)]
+  });
 
   // view deleted
-  var deletedSome = server.plugins.acls.getACLValue(auth, 'posts.viewDeleted.some');
   var deletedCond = [
     server.authorization.build({
       // permission based override
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.viewDeleted.all'
+      permission: 'posts.find.bypass.viewDeleted.admin'
     }),
     server.authorization.build({
       // is board moderator
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args:[userId, postId],
-      permission: deletedSome
+      permission: server.plugins.acls.getACLValue(auth, 'posts.find.bypass.viewDeleted.mod')
     })
   ];
 

@@ -22,7 +22,7 @@ module.exports = function postsDelete(server, auth, postId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.privilegedDelete.all'
+      permission: 'posts.delete.bypass.owner.admin'
     },
     {
       // is post owner
@@ -36,7 +36,7 @@ module.exports = function postsDelete(server, auth, postId) {
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.privilegedDelete.some')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.delete.bypass.owner.mod')
     },
     Promise.join(isThreadModerated, isThreadOwner, hasSMPrivilege, function(threadSM, owner, userSM) {
       if (threadSM && owner && userSM) { return true; }
@@ -45,31 +45,6 @@ module.exports = function postsDelete(server, auth, postId) {
   ];
   var deleted = server.authorization.stitch(Boom.forbidden(), deleteCond, 'any');
 
-  // access board with post id
-  var accessCond = [
-    {
-      // permission based override
-      type: 'hasPermission',
-      server: server,
-      auth: auth,
-      permission: 'boards.viewUncategorized.all'
-    },
-    {
-      // is board moderator
-      type: 'isMod',
-      method: server.db.moderators.isModeratorWithPostId,
-      args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'boards.viewUncategorized.some')
-    },
-    {
-      // is board visible
-      type: 'dbValue',
-      method: server.db.posts.getPostsBoardInBoardMapping,
-      args: [postId, server.plugins.acls.getUserPriority(auth)]
-    }
-  ];
-  var access = server.authorization.stitch(Boom.notFound(), accessCond, 'any');
-
   // is thread locked
   var lockedCond = [
     {
@@ -77,7 +52,7 @@ module.exports = function postsDelete(server, auth, postId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.bypassLock.all'
+      permission: 'posts.delete.bypass.locked.admin'
     },
     {
       // is thread locked
@@ -91,13 +66,26 @@ module.exports = function postsDelete(server, auth, postId) {
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.bypassLock.some')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.delete.bypass.locked.mod')
     }
   ];
   var locked = server.authorization.stitch(Boom.forbidden(), lockedCond, 'any');
 
+  // access board with post id
+  var access = server.authorization.build({
+    error: Boom.notFound('Board Not Found'),
+    type: 'dbValue',
+    method: server.db.posts.getPostsBoardInBoardMapping,
+    args: [postId, server.plugins.acls.getUserPriority(auth)]
+  });
+
   // is requester active
-  var active = server.authorization.common.isActive(Boom.forbidden('Account Not Active'), server, userId);
+  var active = server.authorization.build({
+    error: Boom.forbidden('Account Not Active'),
+    type: 'isActive',
+    server: server,
+    userId: userId
+  });
 
   return Promise.all([notFirst, deleted, access, locked, active]);
 };

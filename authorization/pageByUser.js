@@ -22,7 +22,7 @@ module.exports = function postsPageByUser(server, auth, username) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'users.viewDeleted'
+      permission: 'posts.pageByUser.bypass.viewDeleted.admin'
     }
   ];
   var access = server.authorization.stitch(Boom.notFound(), accessCond, 'any');
@@ -31,8 +31,8 @@ module.exports = function postsPageByUser(server, auth, username) {
   var priority = server.plugins.acls.getUserPriority(auth);
 
   // view deleted profile posts
-  var viewAll = server.plugins.acls.getACLValue(auth, 'posts.viewDeleted.all');
-  var viewSome = server.plugins.acls.getACLValue(auth, 'posts.viewDeleted.some');
+  var viewAll = server.plugins.acls.getACLValue(auth, 'posts.pageByUser.bypass.viewDeleted.admin');
+  var viewSome = server.plugins.acls.getACLValue(auth, 'posts.pageByUser.bypass.viewDeleted.mod');
   var deleted = server.db.moderators.getUsersBoards(userId)
   .then(function(boards) {
     var result = false;

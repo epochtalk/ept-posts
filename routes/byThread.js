@@ -26,7 +26,6 @@ module.exports = {
   path: '/api/posts',
   config: {
     auth: { mode: 'try', strategy: 'jwt' },
-    plugins: { acls: 'posts.byThread' },
     validate: {
       query: Joi.object().keys({
         thread_id: Joi.string().required(),
