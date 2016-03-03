@@ -59,8 +59,8 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
       delete ctrl.privilegedControlAccess.create;
       delete ctrl.privilegedControlAccess.moderated;
       ctrl.showThreadControls = some(ctrl.privilegedControlAccess);
-      ctrl.pollControlAccess =  { create: Session.hasPermission('polls.create') };
-
+      ctrl.pollControlAccess =  Session.getControlAccess('polls', boardId);
+      
       // get boards for mods and admins
       ctrl.getBoards();
     });
