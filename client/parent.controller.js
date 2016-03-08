@@ -31,6 +31,7 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
     // Post Permissions
     this.canPost = function() {
       if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
       if (!Session.hasPermission('posts.create.allow')) { return false; }
 
       if (ctrl.thread.locked) {
@@ -58,9 +59,9 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
       delete ctrl.privilegedControlAccess.title;
       delete ctrl.privilegedControlAccess.create;
       delete ctrl.privilegedControlAccess.moderated;
-      ctrl.showThreadControls = some(ctrl.privilegedControlAccess);
+      ctrl.showThreadControls = some(ctrl.privilegedControlAccess) && !ctrl.bannedFromBoard;
       ctrl.pollControlAccess =  Session.getControlAccess('polls', boardId);
-      
+
       // get boards for mods and admins
       ctrl.getBoards();
     });

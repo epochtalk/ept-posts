@@ -1,6 +1,8 @@
 <!-- Moderated Thread Banner -->
-<div class="banner warning" ng-if="PostsParentCtrl.thread.moderated">
-  Moderated Thread - <em>Thread starter can <strong>delete</strong> posts.</em>
+<div class="banner-container">
+  <div class="banner warning" ng-if="PostsParentCtrl.thread.moderated">
+    Moderated Thread &mdash; <em>Thread starter can <strong>delete</strong> posts.</em>
+  </div>
 </div>
 
 <!-- Page Title -->
@@ -10,7 +12,7 @@
     <h4 ng-bind-html="::PostsParentCtrl.thread.title"></h4>
     <i class="icon-epoch-lock" ng-if="PostsParentCtrl.thread.locked"></i>
     <i class="icon-epoch-verified" ng-if="PostsParentCtrl.thread.sticky"></i>
-    <a ng-href="#" ng-if="PostsParentCtrl.controlAccess.privilegedTitle" ng-click="PostsParentCtrl.openEditThread()">
+    <a ng-href="#" ng-if="PostsParentCtrl.controlAccess.privilegedTitle && !PostsParentCtrl.bannedFromBoard" ng-click="PostsParentCtrl.openEditThread()">
       <i class="icon-epoch-edit-pencil"></i>
     </a>
   </div>
@@ -34,7 +36,7 @@
     <i class="icon-epoch-watch"></i>Watch This Thread
   </a>
   <!-- Add Poll -->
-  <a class="inverted-button" ng-click="PostsParentCtrl.addPoll = !PostsParentCtrl.addPoll" ng-if="!PostsParentCtrl.thread.poll && (PostsParentCtrl.user.id === PostsParentCtrl.thread.user.id || PostsParentCtrl.pollControlAccess.privilegedCreate) && PostsParentCtrl.pollControlAccess.create">
+  <a class="inverted-button" ng-click="PostsParentCtrl.addPoll = !PostsParentCtrl.addPoll" ng-if="!PostsParentCtrl.thread.poll && (PostsParentCtrl.user.id === PostsParentCtrl.thread.user.id || PostsParentCtrl.pollControlAccess.privilegedCreate) && PostsParentCtrl.pollControlAccess.create && !PostsParentCtrl.bannedFromBoard">
     <i class="icon-epoch-watch"></i>Add a Poll
   </a>
 </div>
@@ -66,7 +68,7 @@
   <!-- Move Thread -->
   <div class="control-full-width"  ng-if="PostsParentCtrl.controlAccess.privilegedMove">
     <label>Move Thread</label>
-    <select name="boards" id="moveThreadBoards" ng-model="PostsParentCtrl.moveBoard" ng-options="board.name for board in PostsParentCtrl.boards"></select>
+    <select name="boards" id="moveThreadBoards" ng-model="PostsParentCtrl.moveBoard" ng-options="board.name group by board.parent_name for board in PostsParentCtrl.boards | orderBy:board.view_order"></select>
     <a class="button" ng-click="PostsParentCtrl.moveThread()"><i class="fa fa-arrow-circle-left"></i>&nbsp;&nbsp;&nbsp;Move</a>
   </div>
 </div>

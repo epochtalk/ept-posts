@@ -1,6 +1,6 @@
 var ctrl = [
-  '$rootScope', '$scope', '$timeout', '$anchorScroll', '$location', 'Alert', 'Watchlist', 'Session', 'Posts', 'pageData',
-  function($rootScope, $scope, $timeout, $anchorScroll, $location, Alert, Watchlist, Session, Posts, pageData) {
+  '$rootScope', '$scope', '$timeout', '$anchorScroll', '$location', 'Alert', 'BanSvc', 'Watchlist', 'Session', 'Posts', 'pageData',
+  function($rootScope, $scope, $timeout, $anchorScroll, $location, Alert, BanSvc, Watchlist, Session, Posts, pageData) {
     var ctrl = this;
     var parent = $scope.$parent.PostsParentCtrl;
     parent.loggedIn = Session.isAuthenticated;
@@ -9,6 +9,8 @@ var ctrl = [
     parent.posts = pageData.posts;
     parent.thread = pageData.thread;
     parent.board_id = pageData.thread.board_id;
+    // TODO: This will not be here once actual boards are stored in this array
+    parent.bannedFromBoard = BanSvc.banStatus().boards.length > 0;
     this.rootUrl = generateBaseUrl();
     this.user = Session.user;
     this.posts = pageData.posts;
@@ -26,6 +28,7 @@ var ctrl = [
     // Posts Permissions
     this.canPost = function() {
       if (!ctrl.loggedIn()) { return false; }
+      if (BanSvc.banStatus().boards.length > 0) { return false; }
       if (!Session.hasPermission('posts.create.allow')) { return false; }
 
       if (ctrl.thread.locked) {
@@ -41,6 +44,7 @@ var ctrl = [
 
     this.canUpdate = function(post) {
       if (!Session.isAuthenticated()) { return false; }
+      if (BanSvc.banStatus().boards.length > 0) { return false; }
       if (!Session.hasPermission('posts.update.allow')) { return false; }
 
       var validBypass = false;
@@ -78,6 +82,7 @@ var ctrl = [
 
     this.canDelete = function(post) {
       if (!Session.isAuthenticated()) { return false; }
+      if (BanSvc.banStatus().boards.length > 0) { return false; }
       if (!Session.hasPermission('posts.delete.allow')) { return false; }
 
       var validBypass = false;
@@ -105,6 +110,7 @@ var ctrl = [
 
     this.canPurge = function() {
       if (!Session.isAuthenticated()) { return false; }
+      if (BanSvc.banStatus().boards.length > 0) { return false; }
       if (!Session.hasPermission('posts.purge.allow')) { return false; }
 
       if (Session.hasPermission('posts.purge.bypass.purge.admin')) { return true; }
