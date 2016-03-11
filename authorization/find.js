@@ -7,6 +7,15 @@ module.exports = function postsFind(server, auth, postId) {
   var authenticated = auth.isAuthenticated;
   if (authenticated) { userId = auth.credentials.id; }
 
+  // check base permission
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.find.allow'
+  });
+
   // access board
   var access = server.authorization.build({
     error: Boom.notFound('Board Not Found'),
@@ -38,6 +47,6 @@ module.exports = function postsFind(server, auth, postId) {
   .catch(() => { return false; });
 
   // final promise
-  return Promise.all([access, deleted])
-  .then((dataArr) => { return dataArr[1]; });
+  return Promise.all([allowed, access, deleted])
+  .then((dataArr) => { return dataArr[2]; });
 };

@@ -4,6 +4,15 @@ var Promise = require('bluebird');
 module.exports = function postsCreate(server, auth, threadId) {
   var userId = auth.credentials.id;
 
+  // check base permission
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.create.allow'
+  });
+
   // Access to locked thread with thread id
   var lockCond = [
     {
@@ -47,5 +56,5 @@ module.exports = function postsCreate(server, auth, threadId) {
   });
 
   // final promise
-  return Promise.all([access, locked, active]);
+  return Promise.all([allowed, access, locked, active]);
 };

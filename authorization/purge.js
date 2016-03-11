@@ -4,6 +4,15 @@ var Promise = require('bluebird');
 module.exports = function postsPurge(server, auth, postId) {
   var userId = auth.credentials.id;
 
+  // check base permission
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.purge.allow'
+  });
+
   // is not first post
   var notFirst = server.authorization.build({
     error: Boom.forbidden(),
@@ -30,5 +39,5 @@ module.exports = function postsPurge(server, auth, postId) {
   ];
   var purge = server.authorization.stitch(Boom.forbidden(), purgeCond, 'any');
 
-  return Promise.all([notFirst, purge]);
+  return Promise.all([allowed, notFirst, purge]);
 };

@@ -4,6 +4,15 @@ var Promise = require('bluebird');
 module.exports = function postsDelete(server, auth, postId) {
   var userId = auth.credentials.id;
 
+  // check base permissions
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.delete.allow'
+  });
+
   // is not first post
   var notFirst = server.authorization.build({
     error: Boom.forbidden(),
@@ -87,5 +96,5 @@ module.exports = function postsDelete(server, auth, postId) {
     userId: userId
   });
 
-  return Promise.all([notFirst, deleted, access, locked, active]);
+  return Promise.all([allowed, notFirst, deleted, access, locked, active]);
 };

@@ -5,6 +5,15 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
   var userId = auth.credentials.id;
   var error = Boom.forbidden();
 
+  // check base permission
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.update.allow'
+  });
+
   // is post owner
   var ownerCond = [
     {
@@ -32,7 +41,7 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
   var owner = server.authorization.stitch(error, ownerCond, 'any');
 
   // can write to post
-  var writeCond = [
+  var deletedCond = [
     {
       // permission based override
       type: 'hasPermission',
@@ -55,7 +64,7 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.deleted.mod')
     }
   ];
-  var writer = server.authorization.stitch(error, writeCond, 'any');
+  var deleted = server.authorization.stitch(error, deletedCond, 'any');
 
   // is thread locked
   var lockedCond = [
@@ -100,5 +109,5 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
   });
 
   // final promise
-  return Promise.all([owner, writer, access, locked, active]);
+  return Promise.all([allowed, owner, deleted, access, locked, active]);
 };

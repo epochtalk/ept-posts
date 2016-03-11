@@ -7,6 +7,15 @@ module.exports = function postsByThread(server, auth, threadId) {
   var authenticated = auth.isAuthenticated;
   if (authenticated) { userId = auth.credentials.id; }
 
+  // check base permission
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.byThread.allow'
+  });
+
   // access board
   var access = server.authorization.build({
     error: Boom.notFound('Board Not Found'),
@@ -26,6 +35,6 @@ module.exports = function postsByThread(server, auth, threadId) {
     return result;
   });
 
-  return Promise.all([access, viewDeleted])
-  .then((data) => { return data[1]; });
+  return Promise.all([allowed, access, viewDeleted])
+  .then((data) => { return data[2]; });
 };

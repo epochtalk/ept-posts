@@ -4,9 +4,17 @@ var querystring = require('querystring');
 
 module.exports = function postsPageByUser(server, auth, username) {
   // try mode on: must check user is authed
-
   var userId;
   if (auth.isAuthenticated) { userId = auth.credentials.id; }
+
+  // check base Permission
+  var allowed = server.authorization.build({
+    error: Boom.forbidden(),
+    type: 'hasPermission',
+    server: server,
+    auth: auth,
+    permission: 'posts.pageByUser.allow'
+  });
 
   // access user
   var accessCond = [
@@ -41,6 +49,6 @@ module.exports = function postsPageByUser(server, auth, username) {
     return result;
   });
 
-  return Promise.all([access, priority, deleted])
-  .then((data) => { return { priority: data[1], viewables: data[2] }; });
+  return Promise.all([allowed, access, priority, deleted])
+  .then((data) => { return { priority: data[2], viewables: data[3] }; });
 };
