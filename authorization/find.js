@@ -31,14 +31,14 @@ module.exports = function postsFind(server, auth, postId) {
       type: 'hasPermission',
       server: server,
       auth: auth,
-      permission: 'posts.find.bypass.viewDeleted.admin'
+      permission: 'posts.find.bypass.viewDeletedPosts.admin'
     }),
     server.authorization.build({
       // is board moderator
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args:[userId, postId],
-      permission: server.plugins.acls.getACLValue(auth, 'posts.find.bypass.viewDeleted.mod')
+      permission: server.plugins.acls.getACLValue(auth, 'posts.find.bypass.viewDeletedPosts.mod')
     })
   ];
 

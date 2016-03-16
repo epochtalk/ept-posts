@@ -13,7 +13,7 @@ var validation =  Joi.object().keys({
   byThread: Joi.object().keys({
     allow: Joi.boolean(),
     bypass: Joi.object().keys({
-      viewDeleted: Joi.object().keys({
+      viewDeletedPosts: Joi.object().keys({
         admin: Joi.boolean(),
         mod: Joi.boolean()
       }).xor('admin', 'mod')
@@ -22,7 +22,7 @@ var validation =  Joi.object().keys({
   find: Joi.object().keys({
     allow: Joi.boolean(),
     bypass: Joi.object().keys({
-      viewDeleted: Joi.object().keys({
+      viewDeletedPosts: Joi.object().keys({
         admin: Joi.boolean(),
         mod: Joi.boolean()
       }).xor('admin', 'mod')
@@ -31,7 +31,8 @@ var validation =  Joi.object().keys({
   pageByUser: Joi.object().keys({
     allow: Joi.boolean(),
     bypass: Joi.object().keys({
-      viewDeleted: Joi.object().keys({
+      viewDeletedUsers: Joi.boolean(),
+      viewDeletedPosts: Joi.object().keys({
         admin: Joi.boolean(),
         mod: Joi.boolean()
       }).xor('admin', 'mod')
@@ -85,15 +86,18 @@ var superAdministrator = {
   },
   byThread: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: { viewDeletedPosts: { admin: true } }
   },
   find: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: { viewDeletedPosts: { admin: true } }
   },
   pageByUser: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: {
+      viewDeletedUsers: true,
+      viewDeletedPosts: { admin: true }
+    }
   },
   update: {
     allow: true,
@@ -123,15 +127,18 @@ var administrator = {
   },
   byThread: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: { viewDeletedPosts: { admin: true } }
   },
   find: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: { viewDeletedPosts: { admin: true } }
   },
   pageByUser: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: {
+      viewDeletedUsers: true,
+      viewDeletedPosts: { admin: true }
+    }
   },
   update: {
     allow: true,
@@ -161,15 +168,18 @@ var globalModerator = {
   },
   byThread: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: { viewDeletedPosts: { admin: true } }
   },
   find: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: { viewDeletedPosts: { admin: true } }
   },
   pageByUser: {
     allow: true,
-    bypass: { viewDeleted: { admin: true } }
+    bypass: {
+      viewDeletedUsers: true,
+      viewDeletedPosts: { admin: true }
+    }
   },
   update: {
     allow: true,
@@ -195,15 +205,18 @@ var moderator = {
   },
   byThread: {
     allow: true,
-    bypass: { viewDeleted: { mod: true } }
+    bypass: { viewDeletedPosts: { mod: true } }
   },
   find: {
     allow: true,
-    bypass: { viewDeleted: { mod: true } }
+    bypass: { viewDeletedPosts: { mod: true } }
   },
   pageByUser: {
     allow: true,
-    bypass: { viewDeleted: { mod: true } }
+    bypass: {
+      viewDeletedUsers: true,
+      viewDeletedPosts: { mod: true }
+    }
   },
   update: {
     allow: true,
@@ -250,15 +263,18 @@ var layout = {
   },
   byThread: {
     title: 'View Thread Posts',
-    bypasses: [ { description: 'Show Deleted Posts', control: 'viewDeleted' } ]
+    bypasses: [ { description: 'View Deleted Posts', control: 'viewDeletedPosts' } ]
   },
   find: {
     title: 'View Single Post',
-    bypasses: [ { description: 'Show Deleted Posts', control: 'viewDeleted' } ]
+    bypasses: [ { description: 'View Deleted Posts', control: 'viewDeletedPosts' } ]
   },
   pageByUser: {
     title: 'View User Posts',
-    bypasses: [ { description: 'Show Deleted Posts', control: 'viewDeleted' } ]
+    bypasses: [
+      { description: 'View Deleted Users', control: 'viewDeletedUsers', type: 'boolean'},
+      { description: 'View Deleted Posts', control: 'viewDeletedPosts' }
+    ]
   },
   update: {
     title: 'Update Posts',

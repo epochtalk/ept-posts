@@ -24,9 +24,9 @@ module.exports = function postsByThread(server, auth, threadId) {
     args: [threadId, server.plugins.acls.getUserPriority(auth)]
   });
 
-  // view deleted
-  var viewAll = server.plugins.acls.getACLValue(auth, 'posts.byThread.bypass.viewDeleted.admin');
-  var viewSome = server.plugins.acls.getACLValue(auth, 'posts.byThread.bypass.viewDeleted.mod');
+  // view deleted posts
+  var viewAll = server.plugins.acls.getACLValue(auth, 'posts.byThread.bypass.viewDeletedPosts.admin');
+  var viewSome = server.plugins.acls.getACLValue(auth, 'posts.byThread.bypass.viewDeletedPosts.mod');
   var viewDeleted = server.db.moderators.getUsersBoards(userId)
   .then(function(boards) {
     var result = false;

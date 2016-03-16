@@ -57,7 +57,7 @@ module.exports = {
       var getThreadWatching = request.db.threads.watching(threadId, userId);
       var getPoll = request.db.polls.byThread(threadId);
       var hasVoted = request.db.polls.hasVoted(threadId, userId);
-      var getUserBoardBan = request.db.users.isNotBannedFromBoard(userId, { threadId: threadId })
+      var getUserBoardBan = request.db.bans.isNotBannedFromBoard(userId, { threadId: threadId })
       .then((notBanned) => { return !notBanned || undefined; });
 
       var promise = Promise.join(getPosts, getThread, getThreadWatching, getPoll, hasVoted, getUserBoardBan, function(posts, thread, threadWatching, poll, voted, bannedFromBoard) {
