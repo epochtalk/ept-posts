@@ -105,20 +105,26 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
     this.updateThreadLock = function() {
       // let angular digest the change in lock status
       $timeout(function() {
-        var lockStatus = ctrl.thread.locked;
-        return Threads.lock({id: ctrl.thread.id}, {status: lockStatus}).$promise
+        var newLockStatus = !ctrl.thread.locked;
+        return Threads.lock({id: ctrl.thread.id}, {status: newLockStatus}).$promise
         .then(function(lockThread) { ctrl.thread.locked = lockThread.locked; })
-        .catch(function() { Alert.error('Error Locking Thread'); });
+        .catch(function() {
+          var type = newLockStatus ? 'Locking' : 'Unlocking';
+          Alert.error('Error ' + type + ' Thread');
+        });
       });
     };
 
     this.updateThreadSticky = function() {
       // let angular digest the change in lock status
       $timeout(function() {
-        var stickyStatus = ctrl.thread.sticky;
-        return Threads.sticky({id: ctrl.thread.id}, {status: stickyStatus}).$promise
+        var newStickyStatus = !ctrl.thread.sticky;
+        return Threads.sticky({id: ctrl.thread.id}, {status: newStickyStatus}).$promise
         .then(function(stickyThread) { ctrl.thread.sticky = stickyThread.sticky; })
-        .catch(function() { Alert.error('Error Sticking Thread'); });
+        .catch(function() {
+          var type = newStickyStatus ? 'Stickying' : 'Unstickying';
+          Alert.error('Error ' + type + ' Thread');
+        });
       });
     };
 
@@ -137,7 +143,7 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
     this.purgeThread = function() {
       Threads.delete({id: ctrl.thread.id}).$promise
       .then(function() { $state.go('board.data', {boardId: ctrl.board_id}); })
-      .catch(function() { Alert.error('Failed to purge Thread'); })
+      .catch(function() { Alert.error('Error Purging Thread'); })
       .finally(function() { ctrl.showPurgeThreadModal = false; });
     };
 
