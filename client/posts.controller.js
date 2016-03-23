@@ -22,9 +22,6 @@ var ctrl = [
     if ($location.hash().length) { $timeout($anchorScroll, 1000); }
     else { $timeout($anchorScroll); }
 
-    // Get access rights to page controls for authed user
-    this.moderatedControlAccess = Session.getControlAccess('threads.moderated');
-
     // Posts Permissions
     this.canPost = function() {
       if (!ctrl.loggedIn()) { return false; }
@@ -98,7 +95,7 @@ var ctrl = [
 
       // moderated/owner
       if (post.user.id === ctrl.user.id) { validBypass = true; }
-      else if (ctrl.thread.moderated && ctrl.thread.user.id === ctrl.user.id && ctrl.moderatedControlAccess) { validBypass = true; }
+      else if (ctrl.thread.moderated && ctrl.thread.user.id === ctrl.user.id && Session.hasPermission('threads.moderated.allow')) { validBypass = true; }
       else if (Session.hasPermission('posts.delete.bypass.owner.admin')) { validBypass = true; }
       else if (Session.hasPermission('posts.delete.bypass.owner.mod')) {
         if (Session.moderatesBoard(ctrl.thread.board_id)) { validBypass = true; }

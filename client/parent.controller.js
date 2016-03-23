@@ -1,5 +1,3 @@
-var some = require('lodash/some');
-
 var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 'AdminBoards', 'Posts', 'Threads', 'Reports', 'Alert', 'BreadcrumbSvc',
   function($scope, $timeout, $location, $filter, $state, Session, AdminBoards, Posts, Threads, Reports, Alert, BreadcrumbSvc) {
     var ctrl = this;
@@ -15,17 +13,124 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
     this.moveBoard = {};
     this.boards = [];
     this.addPoll = false;
-    this.pollValid = false;
     this.resetPoll = false;
-    this.poll = {};
+    this.poll = { question: '', answers: ['',''] };
+    this.pollValid = false;
 
-    // Thread and Report Permission
-    this.showThreadControls = false;
-    this.controlAccess = {};
-    this.pollControlAccess = {};
+    // Report Permission
     this.reportControlAccess = {
       reportPosts: Session.hasPermission('reports.createPostReport'),
       reportUsers: Session.hasPermission('reports.createUsersReport')
+    };
+
+    // Thread Permissions
+    this.canEditTitle = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
+      if (!Session.hasPermission('threads.title.allow')) { return false; }
+
+      var title = false;
+      if (ctrl.thread.user.id === Session.user.id) { title = true; }
+      else {
+        if (Session.hasPermission('threads.title.bypass.owner.admin')) { title = true; }
+        else if (Session.hasPermission('threads.title.bypass.owner.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { title = true; }
+        }
+      }
+      return title;
+    };
+
+    this.canLock = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
+      if (!Session.hasPermission('threads.lock.allow')) { return false; }
+
+      var lock = false;
+      if (ctrl.thread.user.id === Session.user.id) { lock = true; }
+      else {
+        if (Session.hasPermission('threads.lock.bypass.owner.admin')) { lock = true; }
+        else if (Session.hasPermission('threads.lock.bypass.owner.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { lock = true; }
+        }
+      }
+      return lock;
+    };
+
+    this.canSticky = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
+      if (!Session.hasPermission('threads.sticky.allow')) { return false; }
+
+      var sticky = false;
+      if (Session.hasPermission('threads.sticky.bypass.owner.admin')) { sticky = true; }
+      else if (Session.hasPermission('threads.sticky.bypass.owner.mod')) {
+        if (Session.moderatesBoard(ctrl.thread.board_id)) { sticky = true; }
+      }
+      return sticky;
+    };
+
+    this.canPurge = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
+      if (!Session.hasPermission('threads.purge.allow')) { return false; }
+
+      var purge = false;
+      if (Session.hasPermission('threads.purge.bypass.owner.admin')) { purge = true; }
+      else if (Session.hasPermission('threads.purge.bypass.owner.mod')) {
+        if (Session.moderatesBoard(ctrl.thread.board_id)) { purge = true; }
+      }
+      return purge;
+    };
+
+    this.canMove = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
+      if (!Session.hasPermission('threads.move.allow')) { return false; }
+
+      var move = false;
+      if (Session.hasPermission('threads.move.bypass.owner.admin')) { move = true; }
+      else if (Session.hasPermission('threads.move.bypass.owner.mod')) {
+        if (Session.moderatesBoard(ctrl.thread.board_id)) { move = true; }
+      }
+      return move;
+    };
+
+    this.showUserControls = function() {
+      if (!ctrl.loggedIn()) { return false; }
+
+      var show = false;
+      if (!ctrl.thread.watched) { show = true; }
+      if (ctrl.canCreatePoll()) { show = true; }
+      return show;
+    };
+
+    this.showThreadControls = function() {
+      if (!ctrl.loggedIn()) { return false; }
+
+      var show = false;
+      if (ctrl.canLock()) { show = true; }
+      if (ctrl.canSticky()) { show = true; }
+      if (ctrl.canPurge()) { show = true; }
+      if (ctrl.canMove()) { show = true; }
+      return show;
+    };
+
+    // Poll Permissions
+    this.canCreatePoll = function() {
+      if (!ctrl.loggedIn()) { return false; }
+      if (ctrl.thread.poll) { return false; }
+      if (ctrl.bannedFromBoard) { return false; }
+      if (!Session.hasPermission('threads.createPoll.allow')) { return false; }
+
+      var create = false;
+      if (ctrl.thread.user.id === Session.user.id) { create = true; }
+      else {
+        if (Session.hasPermission('threads.createPoll.bypass.owner.admin')) { create = true; }
+        else if (Session.hasPermission('threads.createPoll.bypass.owner.mod')) {
+          if (Session.moderatesBoard(ctrl.thread.board_id)) { create = true; }
+        }
+      }
+      return create;
     };
 
     // Post Permissions
@@ -47,32 +152,16 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
 
     // wait for board_id to be populated by child controller
     $scope.$watch(function() { return ctrl.board_id; }, function(boardId) {
-      // Get access rights to page controls for authed user
-      ctrl.controlAccess = Session.getControlAccess('threads', boardId);
-      // thread owner can lock and edit title
-      if (ctrl.user.id === ctrl.thread.user.id) {
-        ctrl.controlAccess.privilegedLock = ctrl.controlAccess.lock;
-        ctrl.controlAccess.privilegedTitle = ctrl.controlAccess.title;
-      }
-      ctrl.privilegedControlAccess = angular.copy(ctrl.controlAccess);
-      delete ctrl.privilegedControlAccess.lock; // remove non privileged permissions
-      delete ctrl.privilegedControlAccess.title;
-      delete ctrl.privilegedControlAccess.create;
-      delete ctrl.privilegedControlAccess.moderated;
-      ctrl.showThreadControls = some(ctrl.privilegedControlAccess) && !ctrl.bannedFromBoard;
-      ctrl.pollControlAccess =  Session.getControlAccess('polls', boardId);
-
-      // get boards for mods and admins
-      ctrl.getBoards();
+      ctrl.getBoards(boardId); // get boards for mods and admins
     });
 
-    this.getBoards = function() {
-      if (ctrl.controlAccess.privilegedMove) {
+    this.getBoards = function(boardId) {
+      if (ctrl.canMove()) {
         return AdminBoards.moveBoards().$promise
         .then(function(allBoards) {
           ctrl.boards = allBoards || [];
           ctrl.boards.map(function(board) {
-            if (board.id === ctrl.thread.board_id) { ctrl.moveBoard = board; }
+            if (board.id === boardId) { ctrl.moveBoard = board; }
             board.name = $filter('decode')(board.name); // decode html entities
           });
         });
@@ -81,8 +170,8 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
 
     /* Thread Methods */
 
-    this.editThread = false;
     var threadTitle = '';
+    this.editThread = false;
     this.openEditThread = function() {
       threadTitle = ctrl.thread.title;
       ctrl.editThread = true;
@@ -142,15 +231,14 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
     this.openPurgeThreadModal = function() { ctrl.showPurgeThreadModal = true; };
     this.purgeThread = function() {
       Threads.delete({id: ctrl.thread.id}).$promise
-      .then(function() { $state.go('board.data', {boardId: ctrl.board_id}); })
+      .then(function() { $state.go('threads.data', {boardId: ctrl.board_id}); })
       .catch(function() { Alert.error('Error Purging Thread'); })
       .finally(function() { ctrl.showPurgeThreadModal = false; });
     };
 
     /* Poll Methods */
-    this.createPoll = function() {
-      if (!ctrl.pollValid) { return; }
 
+    this.createPoll = function() {
       var requestParams = { threadId: ctrl.thread.id };
       Threads.createPoll(requestParams, ctrl.poll).$promise
       .then(function(data) {
@@ -158,9 +246,7 @@ var ctrl = [ '$scope', '$timeout', '$location', '$filter', '$state', 'Session', 
         ctrl.addPoll = false;
         ctrl.resetPoll = true;
       })
-      .catch(function() {
-        Alert.error('There was an error creating the poll');
-      });
+      .catch(function() { Alert.error('There was an error creating the poll'); });
     };
 
     /* Post Methods */
