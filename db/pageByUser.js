@@ -1,5 +1,5 @@
-var dbc = require('epochtalk-core-pg')({ conString: process.env.DATABASE_URL });
 var path = require('path');
+var dbc = require(path.normalize(__dirname + '/db'));
 var common = require(path.normalize(__dirname + '/common'));
 var db = dbc.db;
 var helper = dbc.helper;

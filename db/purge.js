@@ -1,5 +1,6 @@
-var dbc = require('epochtalk-core-pg')({ conString: process.env.DATABASE_URL });
+var path = require('path');
 var Promise = require('bluebird');
+var dbc = require(path.normalize(__dirname + '/db'));
 var using = Promise.using;
 var db = dbc.db;
 var helper = dbc.helper;

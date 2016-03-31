@@ -1,4 +1,5 @@
-var db = require('epochtalk-core-pg')({ conString: process.env.DATABASE_URL }).db;
+var path = require('path');
+var db = require(path.normalize(__dirname + '/db')).db;
 
 module.exports = function(username) {
   var q = 'SELECT p.post_count as count ' +
