@@ -18,6 +18,7 @@ module.exports = {
   path: '/api/posts',
   config: {
     auth: { strategy: 'jwt' },
+    plugins: { track_ip: true },
     validate: {
       payload: Joi.object().keys({
         title: Joi.string().min(1).max(255).required(),
