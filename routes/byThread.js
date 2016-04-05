@@ -25,6 +25,7 @@ module.exports = {
   method: 'GET',
   path: '/api/posts',
   config: {
+    app: { hook: 'posts.byThread' },
     auth: { mode: 'try', strategy: 'jwt' },
     validate: {
       query: Joi.object().keys({
@@ -34,59 +35,68 @@ module.exports = {
         limit: Joi.number().integer().min(1).max(100).default(25)
       }).without('start', 'page')
     },
-    pre: [ { method: 'auth.posts.byThread(server, auth, query.thread_id)', assign: 'viewables' } ],
+    pre: [
+      { method: 'auth.posts.byThread(server, auth, query.thread_id)', assign: 'viewables' },
+      [
+        { method: 'hooks.preProcessing', assign: 'preprocessed' },
+        { method: processing, assign: 'processed' },
+      ],
+      { method: 'hooks.merge' },
+      { method: 'hooks.postProcessing', assign: 'postprocessed' }
+    ],
     handler: function(request, reply) {
-      // ready parameters
-      var userId = '';
-      var page = request.query.page;
-      var start = request.query.start;
-      var limit = request.query.limit;
-      var threadId = request.query.thread_id;
-      var authenticated = request.auth.isAuthenticated;
-      if (authenticated) { userId = request.auth.credentials.id; }
-      var viewables = request.pre.viewables;
-
-      var opts = { limit: limit, start: 0, page: 1 };
-      if (start) { opts.page = Math.ceil(start / limit); }
-      else if (page) { opts.page = page; }
-      opts.start = ((opts.page * limit) - limit);
-
-      // retrieve posts for this thread
-      var getPosts = request.db.posts.byThread(threadId, opts);
-      var getThread = request.db.threads.find(threadId);
-      var getThreadWatching = request.db.threads.watching(threadId, userId);
-      var getPoll = request.db.polls.byThread(threadId);
-      var hasVoted = request.db.polls.hasVoted(threadId, userId);
-      var getUserBoardBan = request.db.bans.isNotBannedFromBoard(userId, { threadId: threadId })
-      .then((notBanned) => { return !notBanned || undefined; });
-
-      var promise = Promise.join(getPosts, getThread, getThreadWatching, getPoll, hasVoted, getUserBoardBan, function(posts, thread, threadWatching, poll, voted, bannedFromBoard) {
-        // check if thread is being Watched
-        if (threadWatching) { thread.watched = true; }
-        if (poll) {
-          var hideVotes = poll.display_mode === 'voted' && !voted;
-          hideVotes = hideVotes || (poll.display_mode === 'expired' && poll.expiration > Date.now());
-          if (hideVotes) { poll.answers.map(function(answer) { answer.votes = 0; }); }
-          poll.hasVoted = voted;
-          thread.poll = poll;
-        }
-
-        return {
-          thread: thread,
-          bannedFromBoard: bannedFromBoard,
-          limit: opts.limit,
-          page: opts.page,
-          posts: common.cleanPosts(posts, userId, viewables)
-        };
-      })
-      // handle page or start out of range
-      .then(function(ret) {
-        var retVal = Boom.notFound();
-        if (ret.posts.length > 0) { retVal = ret; }
-        return retVal;
-      });
-
-      return reply(promise);
+      return reply(request.pre.processed);
     }
   }
 };
+
+function processing(request, reply) {
+  // ready parameters
+  var userId = '';
+  var page = request.query.page;
+  var start = request.query.start;
+  var limit = request.query.limit;
+  var threadId = request.query.thread_id;
+  var authenticated = request.auth.isAuthenticated;
+  if (authenticated) { userId = request.auth.credentials.id; }
+  var viewables = request.pre.viewables;
+
+  var opts = { limit: limit, start: 0, page: 1 };
+  if (start) { opts.page = Math.ceil(start / limit); }
+  else if (page) { opts.page = page; }
+  opts.start = ((opts.page * limit) - limit);
+
+  // retrieve posts for this thread
+  var getPosts = request.db.posts.byThread(threadId, opts);
+  var getThread = request.db.threads.find(threadId);
+  var getPoll = request.db.polls.byThread(threadId);
+  var hasVoted = request.db.polls.hasVoted(threadId, userId);
+  var getUserBoardBan = request.db.bans.isNotBannedFromBoard(userId, { threadId: threadId })
+  .then((notBanned) => { return !notBanned || undefined; });
+
+  var promise = Promise.join(getPosts, getThread, getPoll, hasVoted, getUserBoardBan, function(posts, thread, poll, voted, bannedFromBoard) {
+    if (poll) {
+      var hideVotes = poll.display_mode === 'voted' && !voted;
+      hideVotes = hideVotes || (poll.display_mode === 'expired' && poll.expiration > Date.now());
+      if (hideVotes) { poll.answers.map(function(answer) { answer.votes = 0; }); }
+      poll.hasVoted = voted;
+      thread.poll = poll;
+    }
+
+    return {
+      thread: thread,
+      bannedFromBoard: bannedFromBoard,
+      limit: opts.limit,
+      page: opts.page,
+      posts: common.cleanPosts(posts, userId, viewables)
+    };
+  })
+  // handle page or start out of range
+  .then(function(ret) {
+    var retVal = Boom.notFound();
+    if (ret.posts.length > 0) { retVal = ret; }
+    return retVal;
+  });
+
+  return reply(promise);
+}
