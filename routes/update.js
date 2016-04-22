@@ -23,8 +23,7 @@ module.exports = {
     validate: {
       payload: {
         title: Joi.string().min(1).max(255).required(),
-        body: Joi.string().allow(''),
-        raw_body: Joi.string().required(),
+        raw_body: Joi.string().min(1).max(5000).required(),
         thread_id: Joi.string().required()
       },
       params: { id: Joi.string().required() }
