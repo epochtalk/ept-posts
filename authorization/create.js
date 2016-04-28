@@ -39,11 +39,19 @@ module.exports = function postsCreate(server, auth, threadId) {
   ];
   var locked = server.authorization.stitch(Boom.forbidden('Thread Is Locked'), lockCond, 'any');
 
-  // Access to board with thread id
-  var access = server.authorization.build({
+  // read board
+  var read = server.authorization.build({
     error: Boom.notFound('Board Not Found'),
     type: 'dbValue',
     method: server.db.threads.getThreadsBoardInBoardMapping,
+    args: [threadId, server.plugins.acls.getUserPriority(auth)]
+  });
+
+  // write board
+  var write = server.authorization.build({
+    error: Boom.forbidden('No Write Access'),
+    type: 'dbValue',
+    method: server.db.threads.getBoardWriteAccess,
     args: [threadId, server.plugins.acls.getUserPriority(auth)]
   });
 
@@ -56,5 +64,5 @@ module.exports = function postsCreate(server, auth, threadId) {
   });
 
   // final promise
-  return Promise.all([allowed, access, locked, active]);
+  return Promise.all([allowed, read, write, locked, active]);
 };

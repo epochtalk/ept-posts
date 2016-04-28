@@ -16,8 +16,8 @@ module.exports = function postsByThread(server, auth, threadId) {
     permission: 'posts.byThread.allow'
   });
 
-  // access board
-  var access = server.authorization.build({
+  // read board
+  var read = server.authorization.build({
     error: Boom.notFound('Board Not Found'),
     type: 'dbValue',
     method: server.db.threads.getThreadsBoardInBoardMapping,
@@ -35,6 +35,6 @@ module.exports = function postsByThread(server, auth, threadId) {
     return result;
   });
 
-  return Promise.all([allowed, access, viewDeleted])
+  return Promise.all([allowed, read, viewDeleted])
   .then((data) => { return data[2]; });
 };

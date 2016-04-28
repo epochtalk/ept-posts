@@ -80,11 +80,19 @@ module.exports = function postsDelete(server, auth, postId) {
   ];
   var locked = server.authorization.stitch(Boom.forbidden(), lockedCond, 'any');
 
-  // access board with post id
-  var access = server.authorization.build({
+  // read board
+  var read = server.authorization.build({
     error: Boom.notFound('Board Not Found'),
     type: 'dbValue',
     method: server.db.posts.getPostsBoardInBoardMapping,
+    args: [postId, server.plugins.acls.getUserPriority(auth)]
+  });
+
+  // write board
+  var write = server.authorization.build({
+    error: Boom.forbidden('No Write Access'),
+    type: 'dbValue',
+    method: server.db.posts.getBoardWriteAccess,
     args: [postId, server.plugins.acls.getUserPriority(auth)]
   });
 
@@ -96,5 +104,5 @@ module.exports = function postsDelete(server, auth, postId) {
     userId: userId
   });
 
-  return Promise.all([allowed, notFirst, deleted, access, locked, active]);
+  return Promise.all([allowed, notFirst, deleted, read, write, locked, active]);
 };

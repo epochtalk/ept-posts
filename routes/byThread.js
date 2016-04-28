@@ -57,8 +57,8 @@ function processing(request, reply) {
   var start = request.query.start;
   var limit = request.query.limit;
   var threadId = request.query.thread_id;
-  var authenticated = request.auth.isAuthenticated;
-  if (authenticated) { userId = request.auth.credentials.id; }
+  if (request.auth.isAuthenticated) { userId = request.auth.credentials.id; }
+  var userPriority = request.server.plugins.acls.getUserPriority(request.auth);
   var viewables = request.pre.viewables;
 
   var opts = { limit: limit, start: 0, page: 1 };
@@ -67,6 +67,7 @@ function processing(request, reply) {
   opts.start = ((opts.page * limit) - limit);
 
   // retrieve posts for this thread
+  var getWriteAccess = request.db.threads.getBoardWriteAccess(threadId, userPriority);
   var getPosts = request.db.posts.byThread(threadId, opts);
   var getThread = request.db.threads.find(threadId);
   var getPoll = request.db.polls.byThread(threadId);
@@ -74,7 +75,7 @@ function processing(request, reply) {
   var getUserBoardBan = request.db.bans.isNotBannedFromBoard(userId, { threadId: threadId })
   .then((notBanned) => { return !notBanned || undefined; });
 
-  var promise = Promise.join(getPosts, getThread, getPoll, hasVoted, getUserBoardBan, function(posts, thread, poll, voted, bannedFromBoard) {
+  var promise = Promise.join(getWriteAccess, getPosts, getThread, getPoll, hasVoted, getUserBoardBan, function(writeAccess, posts, thread, poll, voted, bannedFromBoard) {
     if (poll) {
       var hideVotes = poll.display_mode === 'voted' && !voted;
       hideVotes = hideVotes || (poll.display_mode === 'expired' && poll.expiration > Date.now());
@@ -86,6 +87,7 @@ function processing(request, reply) {
     return {
       thread: thread,
       bannedFromBoard: bannedFromBoard,
+      writeAccess: writeAccess,
       limit: opts.limit,
       page: opts.page,
       posts: common.cleanPosts(posts, userId, viewables)

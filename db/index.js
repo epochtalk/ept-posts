@@ -12,6 +12,7 @@ module.exports = {
   purge: require(path.normalize(__dirname + '/purge')),
   getPostsThread: require(path.normalize(__dirname + '/getPostsThread')),
   getPostsBoardInBoardMapping: require(path.normalize(__dirname + '/getPostsBoardInBoardMapping')),
+  getBoardWriteAccess: require(path.normalize(__dirname + '/getBoardWriteAccess')),
   getThreadFirstPost: require(path.normalize(__dirname + '/getThreadFirstPost')),
   isPostsThreadModerated: require(path.normalize(__dirname + '/isPostsThreadModerated')),
   isPostsThreadOwner: require(path.normalize(__dirname + '/isPostsThreadOwner'))

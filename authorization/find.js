@@ -16,8 +16,8 @@ module.exports = function postsFind(server, auth, postId) {
     permission: 'posts.find.allow'
   });
 
-  // access board
-  var access = server.authorization.build({
+  // read board
+  var read = server.authorization.build({
     error: Boom.notFound('Board Not Found'),
     type: 'dbValue',
     method: server.db.posts.getPostsBoardInBoardMapping,
@@ -47,6 +47,6 @@ module.exports = function postsFind(server, auth, postId) {
   .catch(() => { return false; });
 
   // final promise
-  return Promise.all([allowed, access, deleted])
+  return Promise.all([allowed, read, deleted])
   .then((dataArr) => { return dataArr[2]; });
 };

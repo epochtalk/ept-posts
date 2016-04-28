@@ -1,12 +1,13 @@
 var path = require('path');
 var Promise = require('bluebird');
 var dbc = require(path.normalize(__dirname + '/db'));
-var NotFoundError = Promise.OperationalError;
 var db = dbc.db;
 var helper = dbc.helper;
+var NotFoundError = Promise.OperationalError;
 
 module.exports = function(postId, userPriority) {
   postId = helper.deslugify(postId);
+
   var q = 'SELECT t.board_id FROM posts p LEFT JOIN threads t ON p.thread_id = t.id WHERE p.id = $1';
   return db.sqlQuery(q, [postId])
   .then(function(rows) {
@@ -27,32 +28,32 @@ module.exports = function(postId, userPriority) {
       fp.board_id,
       fp.parent_id,
       fp.category_id,
-      b.viewable_by as board_viewable,
-      c.viewable_by as cat_viewable
+      b.postable_by as board_postable,
+      c.postable_by as cat_postable
     FROM find_parent fp
     LEFT JOIN boards b on fp.board_id = b.id
     LEFT JOIN categories c on fp.category_id = c.id`;
     return db.sqlQuery(q, [boardId])
     .then(function(rows) {
-      var visible = false;
-      if (rows.length < 1) { return visible; }
+      var postable = false;
+      if (rows.length < 1) { return postable; }
 
-      var boardsViewable = true;
-      var catsViewable = true;
+      var boardPostable = true;
+      var catsPostable = true;
       rows.forEach(function(row) {
-        var boardPriority = row.board_viewable;
+        var boardPriority = row.board_postable;
         if (typeof boardPriority === 'number' && userPriority > boardPriority) {
-          boardsViewable = false;
+          boardPostable = false;
         }
 
-        var catPriority = row.cat_viewable;
+        var catPriority = row.cat_postable;
         if (typeof catPriority === 'number' && userPriority > catPriority) {
-          catsViewable = false;
+          catsPostable = false;
         }
       });
 
-      if (boardsViewable && catsViewable) { visible = true; }
-      return visible;
+      if (boardPostable && catsPostable) { postable = true; }
+      return postable;
     });
   })
   .error(function() { return false; });

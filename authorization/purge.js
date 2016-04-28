@@ -13,6 +13,30 @@ module.exports = function postsPurge(server, auth, postId) {
     permission: 'posts.purge.allow'
   });
 
+  // read board
+  var read = server.authorization.build({
+    error: Boom.notFound('Board Not Found'),
+    type: 'dbValue',
+    method: server.db.posts.getPostsBoardInBoardMapping,
+    args: [postId, server.plugins.acls.getUserPriority(auth)]
+  });
+
+  // write board
+  var write = server.authorization.build({
+    error: Boom.forbidden('No Write Access'),
+    type: 'dbValue',
+    method: server.db.posts.getBoardWriteAccess,
+    args: [postId, server.plugins.acls.getUserPriority(auth)]
+  });
+
+  // is requester active
+  var active = server.authorization.build({
+    error: Boom.forbidden('Account Not Active'),
+    type: 'isActive',
+    server: server,
+    userId: userId
+  });
+
   // is not first post
   var notFirst = server.authorization.build({
     error: Boom.forbidden(),
@@ -39,5 +63,5 @@ module.exports = function postsPurge(server, auth, postId) {
   ];
   var purge = server.authorization.stitch(Boom.forbidden(), purgeCond, 'any');
 
-  return Promise.all([allowed, notFirst, purge]);
+  return Promise.all([allowed, read, write, active, notFirst, purge]);
 };
