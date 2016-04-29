@@ -28,6 +28,7 @@ module.exports = function postsFind(server, auth, postId) {
   var deletedCond = [
     server.authorization.build({
       // permission based override
+      error: Boom.notFound(),
       type: 'hasPermission',
       server: server,
       auth: auth,
@@ -35,6 +36,7 @@ module.exports = function postsFind(server, auth, postId) {
     }),
     server.authorization.build({
       // is board moderator
+      error: Boom.notFound(),
       type: 'isMod',
       method: server.db.moderators.isModeratorWithPostId,
       args:[userId, postId],
