@@ -50,7 +50,8 @@ module.exports = function postsDelete(server, auth, postId) {
     Promise.join(isThreadModerated, isThreadOwner, hasSMPrivilege, function(threadSM, owner, userSM) {
       if (threadSM && owner && userSM) { return true; }
       else { return Promise.reject(Boom.forbidden()); }
-    })
+    }),
+    hasPriority(server, auth, 'posts.delete.bypass.owner.priority', postId)
   ];
   var deleted = server.authorization.stitch(Boom.forbidden(), deleteCond, 'any');
 
@@ -76,7 +77,8 @@ module.exports = function postsDelete(server, auth, postId) {
       method: server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
       permission: server.plugins.acls.getACLValue(auth, 'posts.delete.bypass.locked.mod')
-    }
+    },
+    hasPriority(server, auth, 'posts.delete.bypass.locked.priority', postId)
   ];
   var locked = server.authorization.stitch(Boom.forbidden(), lockedCond, 'any');
 
@@ -106,3 +108,19 @@ module.exports = function postsDelete(server, auth, postId) {
 
   return Promise.all([allowed, notFirst, deleted, read, write, locked, active]);
 };
+
+function hasPriority(server, auth, permission, postId) {
+  var actorPermission = server.plugins.acls.getACLValue(auth, permission);
+  if (!actorPermission) { return Promise.reject(Boom.forbidden()); }
+
+  var hasPatrollerRole = false;
+  auth.credentials.roles.map(function(role) {
+    if (role === 'patroller') { hasPatrollerRole = true; }
+  });
+
+  return server.db.roles.posterHasRole(postId, 'newbie')
+  .then(function(posterIsNewbie) {
+    if (hasPatrollerRole && posterIsNewbie) { return true; }
+    else { return Promise.reject(Boom.forbidden()); }
+  });
+}

@@ -43,16 +43,19 @@ var validation =  Joi.object().keys({
     bypass: Joi.object().keys({
       owner: Joi.object().keys({
         admin: Joi.boolean(),
-        mod: Joi.boolean()
-      }).xor('admin', 'mod'),
+        mod: Joi.boolean(),
+        priority: Joi.boolean()
+      }).xor('admin', 'mod', 'priority'),
       deleted: Joi.object().keys({
         admin: Joi.boolean(),
-        mod: Joi.boolean()
-      }).xor('admin', 'mod'),
+        mod: Joi.boolean(),
+        priority: Joi.boolean()
+      }).xor('admin', 'mod', 'priority'),
       locked: Joi.object().keys({
         admin: Joi.boolean(),
-        mod: Joi.boolean()
-      }).xor('admin', 'mod')
+        mod: Joi.boolean(),
+        priority: Joi.boolean()
+      }).xor('admin', 'mod', 'priority')
     })
   }),
   delete: Joi.object().keys({
@@ -60,12 +63,14 @@ var validation =  Joi.object().keys({
     bypass: Joi.object().keys({
       locked: Joi.object().keys({
         admin: Joi.boolean(),
-        mod: Joi.boolean()
-      }).xor('admin', 'mod'),
+        mod: Joi.boolean(),
+        priority: Joi.boolean()
+      }).xor('admin', 'mod', 'priority'),
       owner: Joi.object().keys({
         admin: Joi.boolean(),
-        mod: Joi.boolean()
-      }).xor('admin', 'mod')
+        mod: Joi.boolean(),
+        priority: Joi.boolean()
+      }).xor('admin', 'mod', 'priority')
     })
   }),
   purge: Joi.object().keys({
@@ -235,7 +240,38 @@ var moderator = {
   }
 };
 
+var patroller = {
+  create: { allow: true },
+  byThread: { allow: true },
+  find: { allow: true },
+  pageByUser: { allow: true },
+  update: {
+    allow: true,
+    bypass: {
+      owner: { priority: true },
+      deleted: { priority: true },
+      locked: { priority: true }
+    }
+  },
+  delete: {
+    allow: true,
+    bypass: {
+      locked: { priority: true },
+      owner: { priority: true }
+    }
+  }
+};
+
 var user = {
+  create: { allow: true },
+  byThread: { allow: true },
+  find: { allow: true },
+  pageByUser: { allow: true },
+  update: { allow: true },
+  delete: { allow: true }
+};
+
+var newbie = {
   create: { allow: true },
   byThread: { allow: true },
   find: { allow: true },
@@ -279,16 +315,16 @@ var layout = {
   update: {
     title: 'Update Posts',
     bypasses: [
-      { description: 'Ignore Post Ownership', control: 'owner' },
-      { description: 'Ignore Deleted Posts', control: 'deleted' },
-      { description: 'Ignore Thread Lock', control: 'locked' }
+      { description: 'Ignore Post Ownership', control: 'owner', type: 'priority' },
+      { description: 'Ignore Deleted Posts', control: 'deleted', type: 'priority' },
+      { description: 'Ignore Thread Lock', control: 'locked', type: 'priority' }
     ]
   },
   delete: {
     title: 'Delete Posts',
     bypasses: [
-      { description: 'Ignore Post Ownership', control: 'owner' },
-      { description: 'Ignore Thread Lock', control: 'locked' }
+      { description: 'Ignore Post Ownership', control: 'owner', type: 'priority' },
+      { description: 'Ignore Thread Lock', control: 'locked', type: 'priority' }
     ]
   },
   purge: {
@@ -305,7 +341,9 @@ module.exports = {
     administrator: administrator,
     globalModerator: globalModerator,
     moderator: moderator,
+    patroller: patroller,
     user: user,
+    newbie: newbie,
     banned: banned,
     anonymous: anonymous,
     private: {}

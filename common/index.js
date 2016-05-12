@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var cheerio = require('cheerio');
 var Promise = require('bluebird');
 
 var common = {};
@@ -19,6 +20,11 @@ common.export = () =>  {
       name: 'common.posts.parse',
       method: parse,
       options: { callback: false }
+    },
+    {
+      name: 'common.posts.newbieImages',
+      method: newbieImages,
+      options: { callback: false }
     }
   ];
 };
@@ -37,6 +43,29 @@ function parse(parser, payload) {
 
   // check if parsing was needed
   if (payload.body === payload.raw_body) { payload.raw_body = ''; }
+}
+
+function newbieImages(auth, payload) {
+  // check if user is a newbie
+  var isNewbie = false;
+  auth.credentials.roles.map(function(role) {
+    if (role === 'newbie') { isNewbie = true; }
+  });
+  if (!isNewbie) { return; }
+
+  // load html in payload.body into cheerio
+  var html = payload.body;
+  var $ = cheerio.load(html);
+
+  // collect all the images in the body
+  $('img').each((index, element) => {
+    var src = $(element).attr('src');
+    var canonical = $(element).attr('data-canonical-src');
+    var replacement = `<a href="${src}" target="_blank" data-canonical-src="${canonical}">${src}</a>`;
+    $(element).replaceWith(replacement);
+  });
+
+  payload.body = $.html();
 }
 
 /**

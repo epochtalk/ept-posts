@@ -36,9 +36,10 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       method: server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
       permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.owner.mod')
-    }
+    },
+    hasPriority(server, auth, 'posts.update.bypass.owner.priority', postId)
   ];
-  var owner = server.authorization.stitch(error, ownerCond, 'any');
+  var owner = server.authorization.stitch(Boom.forbidden('owner'), ownerCond, 'any');
 
   // can write to post
   var deletedCond = [
@@ -62,9 +63,10 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       method:  server.db.moderators.isModeratorWithPostId,
       args: [userId, postId],
       permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.deleted.mod')
-    }
+    },
+    hasPriority(server, auth, 'posts.update.bypass.deleted.priority', postId)
   ];
-  var deleted = server.authorization.stitch(error, deletedCond, 'any');
+  var deleted = server.authorization.stitch(Boom.forbidden('deleted'), deletedCond, 'any');
 
   // is thread locked
   var lockedCond = [
@@ -88,9 +90,10 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
       method: server.db.moderators.isModeratorWithThreadId,
       args: [userId, threadId],
       permission: server.plugins.acls.getACLValue(auth, 'posts.update.bypass.locked.mod')
-    }
+    },
+    hasPriority(server, auth, 'posts.update.bypass.locked.priority', postId)
   ];
-  var locked = server.authorization.stitch(error, lockedCond, 'any');
+  var locked = server.authorization.stitch(Boom.forbidden('locked'), lockedCond, 'any');
 
   // read board
   var read = server.authorization.build({
@@ -119,3 +122,19 @@ module.exports = function postsUpdate(server, auth, postId, threadId) {
   // final promise
   return Promise.all([allowed, owner, deleted, read, write, locked, active]);
 };
+
+function hasPriority(server, auth, permission, postId) {
+  var actorPermission = server.plugins.acls.getACLValue(auth, permission);
+  if (!actorPermission) { return Promise.reject(Boom.forbidden()); }
+
+  var hasPatrollerRole = false;
+  auth.credentials.roles.map(function(role) {
+    if (role === 'patroller') { hasPatrollerRole = true; }
+  });
+
+  return server.db.roles.posterHasRole(postId, 'newbie')
+  .then(function(posterIsNewbie) {
+    if (hasPatrollerRole && posterIsNewbie) { return true; }
+    else { return Promise.reject(Boom.forbidden()); }
+  });
+}

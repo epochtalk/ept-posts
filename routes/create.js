@@ -32,6 +32,7 @@ module.exports = {
       { method: 'common.posts.clean(sanitizer, payload)' },
       { method: 'common.posts.parse(parser, payload)' },
       { method: 'common.images.sub(payload)' },
+      { method: 'common.posts.newbieImages(auth, payload)' },
       [
         { method: 'hooks.preProcessing', assign: 'preprocessed' },
         { method: processing, assign: 'processed' },
