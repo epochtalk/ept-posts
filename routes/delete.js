@@ -21,10 +21,21 @@ module.exports = {
   path: '/api/posts/{id}',
   config: {
     auth: { strategy: 'jwt' },
-    validate: { params: { id: Joi.string().required() } },
-    pre: [ { method: 'auth.posts.delete(server, auth, params.id)'} ],
+    validate: {
+      params: { id: Joi.string().required() },
+      query: { locked: Joi.boolean().default(false) }
+    },
+    pre: [
+      { method: 'auth.posts.delete(server, auth, params.id)' },
+      { method: 'common.posts.checkLockedQuery(server, auth, params.id, query)' }
+    ],
     handler: function(request, reply) {
       var promise = request.db.posts.delete(request.params.id)
+      .tap(function() {
+        if (request.query.locked) {
+          return request.db.posts.lock(request.params.id);
+        }
+      })
       .error(function(err) { return Boom.badRequest(err.message); });
       return reply(promise);
     }

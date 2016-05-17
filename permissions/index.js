@@ -73,6 +73,16 @@ var validation =  Joi.object().keys({
       }).xor('admin', 'mod', 'priority')
     })
   }),
+  lock: Joi.object().keys({
+    allow: Joi.boolean(),
+    bypass: Joi.object().keys({
+      lock: Joi.object().keys({
+        admin: Joi.boolean(),
+        mod: Joi.boolean(),
+        priority: Joi.boolean()
+      }).xor('admin', 'mod', 'priority')
+    })
+  }),
   purge: Joi.object().keys({
     allow: Joi.boolean(),
     bypass: Joi.object().keys({
@@ -119,6 +129,10 @@ var superAdministrator = {
       owner: { admin: true }
     }
   },
+  lock: {
+    allow: true,
+    bypass: { purge: { admin: true } }
+  },
   purge: {
     allow: true,
     bypass: { purge: { admin: true } }
@@ -160,6 +174,10 @@ var administrator = {
       owner: { admin: true }
     }
   },
+  lock: {
+    allow: true,
+    bypass: { purge: { admin: true } }
+  },
   purge: {
     allow: true,
     bypass: { purge: { admin: true } }
@@ -200,6 +218,10 @@ var globalModerator = {
       locked: { admin: true },
       owner: { admin: true }
     }
+  },
+  lock: {
+    allow: true,
+    bypass: { purge: { admin: true } }
   }
 };
 
@@ -237,6 +259,10 @@ var moderator = {
       locked: { mod: true },
       owner: { mod: true }
     }
+  },
+  lock: {
+    allow: true,
+    bypass: { purge: { mod: true } }
   }
 };
 
@@ -259,6 +285,10 @@ var patroller = {
       locked: { priority: true },
       owner: { priority: true }
     }
+  },
+  lock: {
+    allow: true,
+    bypass: { purge: { priority: true } }
   }
 };
 
@@ -326,6 +356,10 @@ var layout = {
       { description: 'Ignore Post Ownership', control: 'owner', type: 'priority' },
       { description: 'Ignore Thread Lock', control: 'locked', type: 'priority' }
     ]
+  },
+  lock: {
+    title: 'Lock Posts (lock level required)',
+    bypasses: [ { description: 'Lock Level', control: 'lock', type: 'priority' } ]
   },
   purge: {
     title: 'Purge Posts (purge level required)',

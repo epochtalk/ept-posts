@@ -32,6 +32,11 @@ module.exports = [
     options: { callback: false }
   },
   {
+    name: 'auth.posts.lock',
+    method: require(path.normalize(__dirname + '/lock')),
+    options: { callback: false }
+  },
+  {
     name: 'auth.posts.pageByUser',
     method: require(path.normalize(__dirname + '/pageByUser')),
     options: { callback: false }

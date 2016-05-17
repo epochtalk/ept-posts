@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var Boom = require('boom');
 var cheerio = require('cheerio');
 var Promise = require('bluebird');
 
@@ -24,6 +25,11 @@ common.export = () =>  {
     {
       name: 'common.posts.newbieImages',
       method: newbieImages,
+      options: { callback: false }
+    },
+    {
+      name: 'common.posts.checkLockedQuery',
+      method: checkLockedQuery,
       options: { callback: false }
     }
   ];
@@ -66,6 +72,56 @@ function newbieImages(auth, payload) {
   });
 
   payload.body = $.html();
+}
+
+function checkLockedQuery(server, auth, postId, query) {
+  // has lock query
+  if (!query.locked) { return; }
+
+  // has lock permissions
+  var hasLocked = server.plugins.acls.getACLValue(auth, 'posts.lock.allow');
+
+  // apply lock permission
+  var cond = [
+    {
+      // permission based override
+      type: 'hasPermission',
+      server: server,
+      auth: auth,
+      permission: 'posts.lock.bypass.lock.admin'
+    },
+    {
+      // is board moderator
+      type: 'isMod',
+      method: server.db.moderators.isModeratorWithPostId,
+      args: [auth.credentials.id, postId],
+      permission: server.plugins.acls.getACLValue(auth, 'posts.lock.bypass.lock.mod')
+    },
+    hasPriority(server, auth, 'posts.lock.bypass.lock.priority', postId)
+  ];
+
+  return server.authorization.stitch(Boom.forbidden(), cond, 'any')
+  .then(function() {
+    if (hasLocked) { return; }
+    else { query.locked = ''; }
+  })
+  .catch(function() { query.locked = ''; });
+}
+
+function hasPriority(server, auth, permission, postId) {
+  var actorPermission = server.plugins.acls.getACLValue(auth, permission);
+  if (!actorPermission) { return Promise.reject(Boom.forbidden()); }
+
+  var hasPatrollerRole = false;
+  auth.credentials.roles.map(function(role) {
+    if (role === 'patroller') { hasPatrollerRole = true; }
+  });
+
+  return server.db.roles.posterHasRole(postId, 'newbie')
+  .then(function(posterIsNewbie) {
+    if (hasPatrollerRole && posterIsNewbie) { return true; }
+    else { return Promise.reject(Boom.forbidden()); }
+  });
 }
 
 /**

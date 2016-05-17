@@ -9,6 +9,8 @@ module.exports = {
   pageByUser: require(path.normalize(__dirname + '/pageByUser')),
   delete: require(path.normalize(__dirname + '/delete')),
   undelete: require(path.normalize(__dirname + '/undelete')),
+  lock: require(path.normalize(__dirname + '/lock')),
+  unlock: require(path.normalize(__dirname + '/unlock')),
   purge: require(path.normalize(__dirname + '/purge')),
   getPostsThread: require(path.normalize(__dirname + '/getPostsThread')),
   getPostsBoardInBoardMapping: require(path.normalize(__dirname + '/getPostsBoardInBoardMapping')),

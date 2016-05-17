@@ -8,5 +8,7 @@ module.exports = [
   require(path.normalize(__dirname + '/update')),
   require(path.normalize(__dirname + '/delete')),
   require(path.normalize(__dirname + '/undelete')),
+  require(path.normalize(__dirname + '/lock')),
+  require(path.normalize(__dirname + '/unlock')),
   require(path.normalize(__dirname + '/purge'))
 ];

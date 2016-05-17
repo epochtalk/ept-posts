@@ -7,8 +7,8 @@ var helper = dbc.helper;
 
 module.exports = function(threadId, opts) {
   threadId = helper.deslugify(threadId);
-  var columns = 'plist.id, post.thread_id, post.board_id, post.user_id, post.title, post.body, post.raw_body, post.position, post.deleted, post.created_at, post.updated_at, post.imported_at, post.username, post.user_deleted, post.signature, post.avatar, post.name, p2.priority, p2.highlight_color, p2.role_name';
-  var q2 = 'SELECT p.thread_id, t.board_id, p.user_id, p.title, p.body, p.raw_body, p.position, p.deleted, p.created_at, p.updated_at, p.imported_at, u.username, u.deleted as user_deleted, up.signature, up.avatar, up.fields->\'name\' as name FROM posts p ' +
+  var columns = 'plist.id, post.thread_id, post.board_id, post.user_id, post.title, post.body, post.raw_body, post.position, post.deleted, post.locked, post.created_at, post.updated_at, post.imported_at, post.username, post.user_deleted, post.signature, post.avatar, post.name, p2.priority, p2.highlight_color, p2.role_name';
+  var q2 = 'SELECT p.thread_id, t.board_id, p.user_id, p.title, p.body, p.raw_body, p.position, p.deleted, p.locked, p.created_at, p.updated_at, p.imported_at, u.username, u.deleted as user_deleted, up.signature, up.avatar, up.fields->\'name\' as name FROM posts p ' +
     'LEFT JOIN users u ON p.user_id = u.id ' +
     'LEFT JOIN users.profiles up ON u.id = up.user_id ' +
     'LEFT JOIN threads t ON p.thread_id = t.id ' +

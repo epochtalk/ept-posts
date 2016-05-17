@@ -20,10 +20,6 @@ module.exports = {
   method: 'POST',
   path: '/api/posts/{id}/undelete',
   config: {
-    app: {
-      post_id: 'params.id',
-      isPostDeletable: 'posts.privilegedDelete'
-    },
     auth: { strategy: 'jwt' },
     validate: { params: { id: Joi.string().required() } },
     pre: [ { method: 'auth.posts.delete(server, auth, params.id)'} ],

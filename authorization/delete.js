@@ -56,7 +56,7 @@ module.exports = function postsDelete(server, auth, postId) {
   var deleted = server.authorization.stitch(Boom.forbidden(), deleteCond, 'any');
 
   // is thread locked
-  var lockedCond = [
+  var tLockedCond = [
     {
       // permission based override
       type: 'hasPermission',
@@ -80,7 +80,10 @@ module.exports = function postsDelete(server, auth, postId) {
     },
     hasPriority(server, auth, 'posts.delete.bypass.locked.priority', postId)
   ];
-  var locked = server.authorization.stitch(Boom.forbidden(), lockedCond, 'any');
+  var tLocked = server.authorization.stitch(Boom.forbidden(), tLockedCond, 'any');
+
+  // post locked
+  var pLocked = postLocked(server, auth, postId);
 
   // read board
   var read = server.authorization.build({
@@ -106,7 +109,7 @@ module.exports = function postsDelete(server, auth, postId) {
     userId: userId
   });
 
-  return Promise.all([allowed, notFirst, deleted, read, write, locked, active]);
+  return Promise.all([allowed, notFirst, deleted, read, write, tLocked, pLocked, active]);
 };
 
 function hasPriority(server, auth, permission, postId) {
@@ -123,4 +126,16 @@ function hasPriority(server, auth, permission, postId) {
     if (hasPatrollerRole && posterIsNewbie) { return true; }
     else { return Promise.reject(Boom.forbidden()); }
   });
+}
+
+function postLocked(server, auth, postId) {
+  var userId = auth.credentials.id;
+  return server.db.posts.find(postId)
+  .then(function(post) {
+    if (post.locked && post.user.id === userId) {
+      return Promise.reject(Boom.forbidden('Post is Locked'));
+    }
+    else { return true; }
+  })
+  .error(function(err) { return Promise.reject(Boom.notFound(err)); });
 }
