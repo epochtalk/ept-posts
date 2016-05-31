@@ -42,7 +42,7 @@ module.exports = {
         { method: processing, assign: 'processed' },
       ],
       { method: 'hooks.merge' },
-      { method: 'hooks.postProcessing', assign: 'postprocessed' }
+      { method: 'hooks.postProcessing' }
     ],
     handler: function(request, reply) {
       return reply(request.pre.processed);
