@@ -37,8 +37,9 @@ module.exports = {
     },
     pre: [
       { method: 'auth.posts.byThread(server, auth, query.thread_id)', assign: 'viewables' },
+      { method: 'hooks.preProcessing' },
       [
-        { method: 'hooks.preProcessing', assign: 'preprocessed' },
+        { method: 'hooks.parallelProcessing', assign: 'parallelProcessed' },
         { method: processing, assign: 'processed' },
       ],
       { method: 'hooks.merge' },

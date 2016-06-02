@@ -33,8 +33,9 @@ module.exports = {
       { method: 'common.posts.parse(parser, payload)' },
       { method: 'common.images.sub(payload)' },
       { method: 'common.posts.newbieImages(auth, payload)' },
+      { method: 'hooks.preProcessing' },
       [
-        { method: 'hooks.preProcessing', assign: 'preprocessed' },
+        { method: 'hooks.parallelProcessing', assign: 'paralledProcessed' },
         { method: processing, assign: 'processed' },
       ],
       { method: 'hooks.merge' },
