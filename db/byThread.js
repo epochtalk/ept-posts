@@ -30,6 +30,7 @@ module.exports = function(threadId, opts) {
     q3 + ' ) p2 ON true';
   var params = [threadId, start, limit];
   return db.sqlQuery(query, params)
+  .tap(console.log)
   .map(common.formatPost)
   .then(helper.slugify);
 };
