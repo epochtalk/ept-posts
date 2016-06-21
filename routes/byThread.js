@@ -77,6 +77,7 @@ function processing(request, reply) {
   .then((notBanned) => { return !notBanned || undefined; });
 
   var promise = Promise.join(getWriteAccess, getPosts, getThread, getPoll, hasVoted, getUserBoardBan, function(writeAccess, posts, thread, poll, voted, bannedFromBoard) {
+    console.log('DOCKER_DEBUG:', posts);
     if (poll) {
       var hideVotes = poll.display_mode === 'voted' && !voted;
       hideVotes = hideVotes || (poll.display_mode === 'expired' && poll.expiration > Date.now());
