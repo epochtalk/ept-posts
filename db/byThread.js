@@ -23,7 +23,7 @@ module.exports = function(threadId, opts) {
   var limit = opts.limit || 25;
 
   // get total post count for this thread
-  var q = 'SELECT id, position FROM posts WHERE thread_id = $1 AND position > $2 LIMIT $3';
+  var q = 'SELECT id, position FROM posts WHERE thread_id = $1 AND position > $2 ORDER BY position LIMIT $3';
   var query = 'SELECT ' + columns + ' FROM ( ' +
     q + ' ) plist LEFT JOIN LATERAL ( ' +
     q2 + ' ) post ON true LEFT JOIN LATERAL ( ' +
