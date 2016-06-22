@@ -29,6 +29,7 @@ module.exports = function(threadId, opts) {
     q2 + ' ) post ON true LEFT JOIN LATERAL ( ' +
     q3 + ' ) p2 ON true';
   var params = [threadId, start, limit];
+  console.log(query, params);
   return db.sqlQuery(query, params)
   .tap(console.log)
   .map(common.formatPost)
