@@ -31,7 +31,6 @@ module.exports = function(threadId, opts) {
   var params = [threadId, start, limit];
   console.log(query, params);
   return db.sqlQuery(query, params)
-  .tap(console.log)
   .map(common.formatPost)
   .then(helper.slugify);
 };
