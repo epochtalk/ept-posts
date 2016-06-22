@@ -35,7 +35,7 @@ module.exports = {
       { method: 'common.posts.newbieImages(auth, payload)' },
       { method: 'hooks.preProcessing' },
       [
-        { method: 'hooks.parallelProcessing', assign: 'paralledProcessed' },
+        { method: 'hooks.parallelProcessing', assign: 'parallelProcessed' },
         { method: processing, assign: 'processed' },
       ],
       { method: 'hooks.merge' },
