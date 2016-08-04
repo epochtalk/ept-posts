@@ -17,6 +17,11 @@ module.exports = [
     options: { callback: false }
   },
   {
+    name: 'auth.posts.metaByThread',
+    method: require(path.normalize(__dirname + '/metaByThread')),
+    options: { callback: false }
+  },
+  {
     name: 'auth.posts.update',
     method: require(path.normalize(__dirname + '/update')),
     options: { callback: false }
