@@ -1,4 +1,5 @@
 var Joi = require('joi');
+var Boom = require('boom');
 var Promise = require('bluebird');
 var cheerio = require('cheerio');
 
@@ -49,17 +50,20 @@ module.exports = {
     var getThread = request.db.threads.find(threadId);
 
     return Promise.join(getThread, getFirstPost, function(thread, post) {
-      var $ = cheerio.load('<div>' + post[0].body + '</div>');
-      var postBody = $('div').text();
 
+      // Title
       if (thread.title && viewable) {
         data.ogTitle = data.twTitle = config.website.title + ': ' + thread.title;
       }
 
+      // Description
+      var $ = cheerio.load('<div>' + post[0].body + '</div>');
+      var postBody = $('div').text();
       if (postBody && viewable) {
         data.ogDescription = data.twDescription = postBody;
       }
 
+      // Data Fields
       if (viewable) {
         data.twLabel1 = 'Post Count:';
         data.twData1 = thread.post_count + ' Post(s)';
@@ -72,6 +76,7 @@ module.exports = {
     })
     .then(function(data) {
       return reply.view('index', data);
-    });
+    })
+    .catch(() => { return reply(Boom.badRequest()); });
   }
 };
