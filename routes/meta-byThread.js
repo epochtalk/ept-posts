@@ -42,7 +42,8 @@ module.exports = {
       logo: config.website.logo,
       favicon: config.website.favicon,
       websocket_host: config.websocket_client_host,
-      websocket_port: config.websocket_port
+      websocket_port: config.websocket_port,
+      GAKey: config.gaKey
     };
 
     // retrieve posts for this thread
