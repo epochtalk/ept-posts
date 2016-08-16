@@ -15,8 +15,7 @@ var common = require(path.normalize(__dirname + '/../common'));
   *
   * @apiParam (Query) {number} page=1 Which page of the user's posts to retrieve
   * @apiParam (Query) {number} limit=25 How many posts to return per page
-  * @apiParam (Query) {string="created_at","updated_at","title"} field The field to sort the posts by
-  * @apiParam (Query) {boolean} desc=false True to sort descending, false to sort ascending
+  * @apiParam (Query) {boolean} desc=true True to sort descending, false to sort ascending
   *
   * @apiSuccess {array} posts Array containing posts for a particular user
   *
@@ -32,8 +31,7 @@ module.exports = {
       query: {
         page: Joi.number().integer().min(1).default(1),
         limit: Joi.number().integer().min(1).max(100).default(25),
-        field: Joi.string().default('created_at').valid('thread_title', 'created_at', 'updated_at', 'title'),
-        desc: Joi.boolean().default(false)
+        desc: Joi.boolean().default(true)
       }
     },
     pre: [ { method: 'auth.posts.pageByUser(server, auth, params.username)', assign: 'auth' } ],
@@ -47,7 +45,6 @@ module.exports = {
       var opts = {
         limit: request.query.limit,
         page: request.query.page,
-        sortField: request.query.field,
         sortDesc: request.query.desc
       };
 
@@ -59,7 +56,6 @@ module.exports = {
         return {
           page: opts.page,
           limit: opts.limit,
-          sortField: opts.sortField,
           sortDesc: opts.sortDesc,
           posts: common.cleanPosts(posts, userId, viewables),
           count: count
