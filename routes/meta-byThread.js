@@ -74,6 +74,14 @@ module.exports = {
         data.twData2 = post[0].user.username;
       }
 
+      // Images
+      var imageUrls = [];
+      $('img').each((index, element) => { imageUrls.push($(element).attr('src')); });
+      if (viewable && imageUrls.length > 0) {
+        data.twImage = imageUrls[0];
+        data.ogImages = imageUrls;
+      }
+
       return data;
     })
     .then(function(data) {
