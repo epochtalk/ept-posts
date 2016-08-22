@@ -62,7 +62,7 @@ function processing(request, reply) {
   var userPriority = request.server.plugins.acls.getUserPriority(request.auth);
   var viewables = request.pre.viewables;
 
-  var opts = { limit: limit, start: 0, page: 1 };
+  var opts = { limit: limit, start: 0, page: 1, userId: userId };
   if (start) { opts.page = Math.ceil(start / limit); }
   else if (page) { opts.page = page; }
   opts.start = ((opts.page * limit) - limit);
