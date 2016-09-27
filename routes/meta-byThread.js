@@ -85,9 +85,7 @@ module.exports = {
 
       return data;
     })
-    .then(function(data) {
-      return reply.view('index', data);
-    })
-    .catch(() => { return reply(Boom.badRequest()); });
+    .then(function(data) { return reply.view('index', data); })
+    .catch(() => { return reply().redirect('/404'); });
   }
 };
