@@ -19,6 +19,7 @@ module.exports = {
   method: 'POST',
   path: '/api/posts/{id}',
   config: {
+    app: { hook: 'posts.update' },
     auth: { strategy: 'jwt' },
     validate: {
       payload: {
@@ -32,15 +33,27 @@ module.exports = {
       { method: 'auth.posts.update(server, auth, params.id, payload.thread_id)' },
       { method: 'common.posts.clean(sanitizer, payload)' },
       { method: 'common.posts.parse(parser, payload)' },
-      { method: 'common.images.sub(payload)' }
+      { method: 'common.images.sub(payload)' },
+      { method: 'common.posts.newbieImages(auth, payload)' },
+      { method: 'hooks.preProcessing' },
+      [
+        { method: 'hooks.parallelProcessing', assign: 'parallelProcessed' },
+        { method: processing, assign: 'processed' },
+      ],
+      { method: 'hooks.merge' },
+      { method: 'hooks.postProcessing' }
     ],
     handler: function(request, reply) {
-      var updatePost = request.payload;
-      updatePost.id = request.params.id;
-      var promise = request.db.posts.update(updatePost)
-      // handle image references
-      .then((post) => { return request.imageStore.updateImageReferences(post); });
-      return reply(promise);
+      return reply(request.pre.processed);
     }
   }
 };
+
+function processing(request, reply) {
+  var updatePost = request.payload;
+  updatePost.id = request.params.id;
+  var promise = request.db.posts.update(updatePost)
+  // handle image references
+  .then((post) => { return request.imageStore.updateImageReferences(post); });
+  return reply(promise);
+}
