@@ -46,7 +46,7 @@ module.exports = {
         search: Joi.string()
       }
     },
-    //pre: [ { method: 'auth.users.pagePublic(server, auth)' } ],
+    pre: [ { method: 'auth.posts.search(server, auth)' } ],
   },
   handler: function(request, reply) {
     var opts = {
