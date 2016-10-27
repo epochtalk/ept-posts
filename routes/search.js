@@ -1,4 +1,5 @@
 var Joi = require('joi');
+var querystring = require('querystring');
 
 /**
   * @apiVersion 0.4.0
@@ -52,10 +53,34 @@ module.exports = {
     var opts = {
       limit: request.query.limit,
       page: request.query.page,
-      sortDesc: request.query.desc,
-      searchStr: request.query.search
+      desc: request.query.desc,
+      search: request.query.search
     };
-    var promise = request.db.posts.search(opts);
+    var promise = request.db.posts.search(opts)
+    .then(function(data) {
+      data.posts = data.posts.map(function(item) {
+        item.user = { username: item.username };
+        delete item.username;
+        var origSearch = querystring.unescape(opts.search);
+        var highlightTerms = origSearch.split(' ');
+        highlightTerms.push(origSearch);
+        highlightTerms.forEach(function(term) {
+          var find = escapeRegExp(term);
+          var re = new RegExp(find, 'gi');
+          var highlightMatch = function(match) {
+            return '<div class="highlighted"> ' + match + ' </div>';
+          };
+          item.body = item.body.replace(re, highlightMatch);
+          item.thread_title = item.title.replace(re, highlightMatch);
+        });
+        return item;
+      });
+      return data;
+    });
     return reply(promise);
   }
 };
+
+function escapeRegExp(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+}
