@@ -55,7 +55,8 @@ module.exports = {
       desc: request.query.desc,
       search: request.query.search
     };
-    var promise = request.db.posts.search(opts);
+    var userPriority = request.server.plugins.acls.getUserPriority(request.auth);
+    var promise = request.db.posts.search(opts, userPriority);
     return reply(promise);
   }
 };
