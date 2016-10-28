@@ -14,7 +14,7 @@ module.exports = function(opts) {
   var results = Object.assign({}, opts);
   results.prev = results.page > 1 ? results.page - 1 : undefined;
 
-  var q = 'SELECT p.id, p.title, p.user_id, u.username, p.thread_id, p.position, p.body, t.board_id, b.name AS board_name FROM posts p, users u, threads t, boards b, plainto_tsquery(\'simple\', $1) AS q WHERE (p.tsv @@ q) AND (p.user_id = u.id) AND (p.thread_id = t.id) AND (t.board_id = b.id) ORDER BY p.created_at DESC LIMIT $2 OFFSET $3';
+  var q = 'SELECT * FROM (SELECT p.id, ts_headline(\'simple\', p.title, q, \'StartSel=<mark>, StopSel=</mark>\') as thread_title, p.user_id, p.created_at, u.username, p.thread_id, p.position, ts_headline(\'simple\', p.body, q, \'StartSel=<mark>, StopSel=</mark>\') as body, t.board_id, b.name AS board_name FROM posts p, users u, threads t, boards b, plainto_tsquery(\'simple\', $1) AS q WHERE (p.tsv @@ q) AND (p.user_id = u.id) AND (p.thread_id = t.id) AND (t.board_id = b.id) LIMIT $2 OFFSET $3) as s ORDER BY s.created_at DESC';
 
   // Calculate pagination vars
   var offset = (page * limit) - limit;
