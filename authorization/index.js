@@ -32,6 +32,11 @@ module.exports = [
     options: { callback: false }
   },
   {
+    name: 'auth.posts.search',
+    method: require(path.normalize(__dirname + '/search')),
+    options: { callback: false }
+  },
+  {
     name: 'auth.posts.purge',
     method: require(path.normalize(__dirname + '/purge')),
     options: { callback: false }

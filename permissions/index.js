@@ -28,6 +28,9 @@ var validation =  Joi.object().keys({
       }).xor('admin', 'mod')
     })
   }),
+  search: Joi.object().keys({
+    allow: Joi.boolean()
+  }),
   pageByUser: Joi.object().keys({
     allow: Joi.boolean(),
     bypass: Joi.object().keys({
@@ -95,6 +98,7 @@ var validation =  Joi.object().keys({
 });
 
 var superAdministrator = {
+  search: { allow: true },
   create: {
     allow: true,
     bypass: { locked: { admin: true } }
@@ -140,6 +144,7 @@ var superAdministrator = {
 };
 
 var administrator = {
+  search: { allow: true },
   create: {
     allow: true,
     bypass: { locked: { admin: true } }
@@ -185,6 +190,7 @@ var administrator = {
 };
 
 var globalModerator = {
+  search: { allow: true },
   create: {
     allow: true,
     bypass: { locked: { admin: true } }
@@ -226,6 +232,7 @@ var globalModerator = {
 };
 
 var moderator = {
+  search: { allow: true },
   create: {
     allow: true,
     bypass: { locked: { mod: true } }
@@ -267,6 +274,7 @@ var moderator = {
 };
 
 var patroller = {
+  search: { allow: true },
   create: { allow: true },
   byThread: { allow: true },
   find: { allow: true },
@@ -293,6 +301,7 @@ var patroller = {
 };
 
 var user = {
+  search: { allow: true },
   create: { allow: true },
   byThread: { allow: true },
   find: { allow: true },
@@ -302,6 +311,7 @@ var user = {
 };
 
 var newbie = {
+  search: { allow: true },
   create: { allow: true },
   byThread: { allow: true },
   find: { allow: true },
@@ -323,6 +333,9 @@ var anonymous = {
 };
 
 var layout = {
+  search: {
+    title: 'Search Posts'
+  },
   create: {
     title: 'Create Posts',
     bypasses: [ { description: 'Ignore Thread Lock', control: 'locked' } ],

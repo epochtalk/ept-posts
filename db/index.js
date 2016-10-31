@@ -10,6 +10,7 @@ module.exports = {
   delete: require(path.normalize(__dirname + '/delete')),
   undelete: require(path.normalize(__dirname + '/undelete')),
   lock: require(path.normalize(__dirname + '/lock')),
+  search: require(path.normalize(__dirname + '/search')),
   unlock: require(path.normalize(__dirname + '/unlock')),
   purge: require(path.normalize(__dirname + '/purge')),
   getPostsThread: require(path.normalize(__dirname + '/getPostsThread')),
