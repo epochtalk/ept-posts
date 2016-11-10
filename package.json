@@ -1,6 +1,6 @@
 {
   "name": "ept-posts",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Default Epochtalk Posts",
   "main": "index.js",
   "scripts": {
